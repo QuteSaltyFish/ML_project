@@ -8,15 +8,22 @@ import os
 from PIL import Image
 import json
 import numpy as np
-
+import pandas as pd
 
 class data_set(t.utils.data.Dataset):
-    def __init__(self, names):
-        self.names = names
+    def __init__(self, idx):
+        self.idx = idx
         self.config = json.load(open('config.json'))
         self.data_root = self.config["Taining_Dir"]
-        self.label_root = self.config['Label_Path']
+        self.names = np.array(os.listdir(self.data_root))[idx]
+        self.label_path = self.config['Label_Path']
         self.init_transform()
+        self.read_label()
+
+    def read_label(self):
+        dataframe = pd.read_csv(self.label_path)
+        data = dataframe.values
+        self.label = data[:,1][self.idx]
 
     def init_transform(self):
         """
@@ -28,9 +35,11 @@ class data_set(t.utils.data.Dataset):
 
     def __getitem__(self, index):
         data = np.load(os.path.join(self.data_root, self.names[index]))
-        data['voxel'] = self.transform(data['voxel'].astype(np.float32))
-        data['seg'] = data['seg'].astype(np.float32)
-        return data
+        voxel = self.transform(data['voxel'].astype(np.float32))
+        seg = data['seg'].astype(np.float32)
+        label = self.label[index]
+        data = np.concatenate([voxel, seg])
+        return data, label
 
     def __len__(self):
         return len(self.names)
@@ -55,15 +64,11 @@ class MyDataSet():
         idx = np.array(range(length))
         np.random.shuffle(idx)
         print(idx[0])
-        train_idx = idx[:(int)(length*p)]
-        test_idx = idx[(int)(length*p):]
-        print(self.data_names[[1, 2, 3, 4]])
-        self.train_name = self.data_names[train_idx]
-        self.test_name = self.data_names[test_idx]
-        print(length)
+        self.train_idx = idx[:(int)(length*p)]
+        self.test_idx = idx[(int)(length*p):]
 
-        self.train_set = data_set(self.train_name)
-        self.test_set = data_set(self.test_name)
+        self.train_set = data_set(self.train_idx)
+        self.test_set = data_set(self.test_idx)
         return self.train_set, self.test_set
 
 
@@ -87,7 +92,10 @@ class In_the_wild_set(t.utils.data.Dataset):
         ])
 
     def __getitem__(self, index):
-        data = np.load(os.path.join(self.test_root, self.test_names[index]))\
+        data = np.load(os.path.join(self.test_root, self.test_names[index]))
+        voxel = self.transform(data['voxel'].astype(np.float32))
+        seg = data['seg'].astype(np.float32)
+        data = np.concatenate([voxel, seg])
         return data
 
     def __len__(self):
@@ -103,7 +111,7 @@ if __name__ == "__main__":
     print(len(test_set))
     print(train_set[0][0].shape)
     print(test_set[0][0].shape)
-    print(wild[0][0].shape)
+    print(wild[0].shape)
     # test_data = TestingData()
     # for i in range(len(train_data)):
     #     img, label = train_data[i]
