@@ -34,6 +34,7 @@ class data_set(t.utils.data.Dataset):
         ])
 
     def __getitem__(self, index):
+        print(self.names[index].split('.')[0])
         data = np.load(os.path.join(self.data_root, self.names[index]))
         voxel = self.transform(data['voxel'].astype(np.float32))
         seg = data['seg'].astype(np.float32)
