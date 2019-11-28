@@ -10,6 +10,7 @@ import torchvision as tv
 from model import dataloader
 from model.DnCNN import DnCNN
 from model.func import load_model
+from model import Resnet
 
 if __name__ == "__main__":
     time_start = time.time()
@@ -31,28 +32,41 @@ if __name__ == "__main__":
         train_data, batch_size=config["batch_size"], shuffle=True, num_workers=config["num_workers"])
     test_loader = DataLoader.DataLoader(
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
-    criterian = t.nn.MSELoss()
+    
+    
+    criterian = t.nn.NLLLoss()
 
-    model = DnCNN(n_channels=8).to(DEVICE)
+    model = Resnet.ResNet18().to(DEVICE)
     # Test the train_loader
     model = load_model(model, args.epoch)
     model = model.eval()
 
     with t.no_grad():
         # Test the test_loader
-        for batch_idx, data in enumerate(test_loader):
-            data = data.to(DEVICE)
+        test_loss = 0
+        correct = 0
+        for batch_idx, [data,label] in enumerate(test_loader):
+            data, label = data.to(DEVICE), label.to(DEVICE)
             out = model(data)
-            for _ in range(3):
-                out = model(out)
-            
             # monitor the upper and lower boundary of output
-            out_max = t.max(out)
-            out_min = t.min(out)
-            out = (out - out_min) / (out_max - out_min)
-            DIR = 'result/test_result/epoch_{}'.format(args.epoch)
-            if not os.path.exists(DIR):
-                os.makedirs(DIR)
-            OUTPUT = t.cat([data, out], dim=3)
-            tv.transforms.ToPILImage()(OUTPUT.squeeze().cpu()).save('good_output.jpg') 
+            # out_max = t.max(out)
+            # out_min = t.min(out)
+            # out = (out - out_min) / (out_max - out_min)
+            test_loss += criterian(out, label)
+            pred = out.max(1, keepdim=True)[1]  # 找到概率最大的下标
+            correct += pred.eq(label.view_as(pred)).sum().item()
+
+        test_loss /= len(train_loader.dataset)
+        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            test_loss, correct, len(train_loader.dataset),
+            100. * correct / len(train_loader.dataset)))
+            # monitor the upper and lower boundary of output
+            # out_max = t.max(out)
+            # out_min = t.min(out)
+            # out = (out - out_min) / (out_max - out_min)
+            # DIR = 'result/test_result/epoch_{}'.format(args.epoch)
+            # if not os.path.exists(DIR):
+            #     os.makedirs(DIR)
+            # OUTPUT = t.cat([data, out], dim=3)
+            # tv.transforms.ToPILImage()(OUTPUT.squeeze().cpu()).save('good_output.jpg') 
             # tv.transforms.ToPILImage()(OUTPUT.squeeze().cpu()).save(DIR + '/idx_{}.jpg'.format(batch_idx))

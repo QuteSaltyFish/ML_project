@@ -107,3 +107,4 @@ venv.bak/
 data/
 result/
 saved_model/
+nohup.out

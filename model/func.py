@@ -24,14 +24,17 @@ def load_model(model, epoch):
 
 def eval_model_new_thread(epoch, gpu):
     config = json.load(open("config.json"))
-    path = 'result/nohup_result'
-    if not os.path.exists(path):
-        os.makedirs(path)
+    path_train = 'result/train_result'
+    path_test = 'result/test_result'
+    # if not os.path.exists(path_train):
+    #     os.makedirs(path_train)
+    if not os.path.exists(path_test):
+        os.makedirs(path_test)
     python_path = config['python_path']
     os.system('nohup {} -u test_eval.py --epoch={} --gpu={} > {} 2>&1 &'.format(python_path, epoch, gpu,
-                                                                                path + '/{}.out'.format(epoch)))
-    os.system('nohup {} -u train_eval.py --epoch={} --gpu={} > {} 2>&1 &'.format(python_path, epoch, gpu,
-                                                                                 path + '/{}.out'.format(epoch)))
+                                                                                path_test + '/{}.out'.format(epoch)))
+    # os.system('nohup {} -u train_eval.py --epoch={} --gpu={} > {} 2>&1 &'.format(python_path, epoch, gpu[1],
+                                                                                #  path_train + '/{}.out'.format(epoch)))
 
 
 def eval_model(epoch, gpu='0'):

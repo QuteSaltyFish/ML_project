@@ -34,10 +34,11 @@ class data_set(t.utils.data.Dataset):
         ])
 
     def __getitem__(self, index):
-        print(self.names[index].split('.')[0])
+        # print(self.names[index].split('.')[0])
         data = np.load(os.path.join(self.data_root, self.names[index]))
         voxel = self.transform(data['voxel'].astype(np.float32))
         seg = data['seg'].astype(np.float32)
+        # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         data = np.concatenate([voxel, seg])
         return data, label
@@ -64,7 +65,6 @@ class MyDataSet():
         # create a random array idx
         idx = np.array(range(length))
         np.random.shuffle(idx)
-        print(idx[0])
         self.train_idx = idx[:(int)(length*p)]
         self.test_idx = idx[(int)(length*p):]
 

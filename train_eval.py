@@ -10,6 +10,7 @@ import torchvision as tv
 from model import dataloader
 from model.DnCNN import DnCNN
 from model.func import load_model
+from model import Resnet
 
 if __name__ == "__main__":
     time_start = time.time()
@@ -18,8 +19,10 @@ if __name__ == "__main__":
     DEVICE = t.device(config["DEVICE"])
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epoch", default=1, type=int, help="The epoch to be tested")
-    parser.add_argument("--gpu", default='1', type=str, help="choose which DEVICE U want to use")
+    parser.add_argument("--epoch", default=1, type=int,
+                        help="The epoch to be tested")
+    parser.add_argument("--gpu", default=config["GPU"], type=str,
+                        help="choose which DEVICE U want to use")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -32,24 +35,33 @@ if __name__ == "__main__":
     test_loader = DataLoader.DataLoader(
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
 
-
-    criterian = t.nn.MSELoss()
-    model = DnCNN(n_channels=8).to(DEVICE)
+    criterian = t.nn.CrossEntropyLoss()
+    model = Resnet.ResNet18().to(DEVICE)
     # Test the train_loader
     model = load_model(model, args.epoch)
     model = model.eval()
 
     with t.no_grad():
         # Test the test_loader
+        train_loss = 0
+        correct = 0
         for batch_idx, [data, label] in enumerate(train_loader):
-            data = data.to(DEVICE)
+            data, label = data.to(DEVICE), label.to(DEVICE)
             out = model(data)
             # monitor the upper and lower boundary of output
-            out_max = t.max(out)
-            out_min = t.min(out)
-            out = (out - out_min) / (out_max - out_min)
-            DIR = 'result/train_result/epoch_{}'.format(args.epoch)
-            if not os.path.exists(DIR):
-                os.makedirs(DIR)
-            OUTPUT = t.cat([data, out], dim=3)
-            tv.transforms.ToPILImage()(OUTPUT.squeeze().cpu()).save(DIR + '/idx_{}.jpg'.format(batch_idx))
+            # out_max = t.max(out)
+            # out_min = t.min(out)
+            # out = (out - out_min) / (out_max - out_min)
+            train_loss += criterian(out, label)
+            pred = out.max(1, keepdim=True)[1]  # 找到概率最大的下标
+            correct += pred.eq(label.view_as(pred)).sum().item()
+
+        train_loss /= len(train_loader.dataset)
+        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+            train_loss, correct, len(train_loader.dataset),
+            100. * correct / len(train_loader.dataset)))
+            # DIR = 'result/train_result/epoch_{}'.format(args.epoch)
+            # if not os.path.exists(DIR):
+            #     os.makedirs(DIR)
+            # OUTPUT = t.cat([data, out], dim=3)
+            # tv.transforms.ToPILImage()(OUTPUT.squeeze().cpu()).save(DIR + '/idx_{}.jpg'.format(batch_idx))
