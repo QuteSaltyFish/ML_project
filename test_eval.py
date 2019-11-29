@@ -56,10 +56,10 @@ if __name__ == "__main__":
             pred = out.max(1, keepdim=True)[1]  # 找到概率最大的下标
             correct += pred.eq(label.view_as(pred)).sum().item()
 
-        test_loss /= len(train_loader.dataset)
+        test_loss /= len(test_loader.dataset)
         print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss, correct, len(train_loader.dataset),
-            100. * correct / len(train_loader.dataset)))
+            test_loss, correct, len(test_loader.dataset),
+            100. * correct / len(test_loader.dataset)))
             # monitor the upper and lower boundary of output
             # out_max = t.max(out)
             # out_min = t.min(out)

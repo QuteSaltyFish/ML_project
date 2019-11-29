@@ -8,7 +8,9 @@ import multiprocessing
 from model import dataloader
 from model.DnCNN import DnCNN
 from model import Resnet
-from model.func import save_model, eval_model_new_thread, eval_model
+from model.func import save_model, eval_model_new_thread, eval_model, load_model
+import argparse
+
 
 if __name__ == "__main__":
     time_start = time.time()
@@ -19,6 +21,11 @@ if __name__ == "__main__":
     LR = config['lr']
     EPOCH = config['epoch']
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
+    parser.add_argument("--epoch", default=0, type=int, help="The epoch to be tested")
+    args = parser.parse_args()
+
     DataSet = dataloader.MyDataSet()
     train_data, test_data = DataSet.test_trian_split()
 
@@ -28,7 +35,9 @@ if __name__ == "__main__":
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
 
     model = Resnet.ResNet18().to(DEVICE)
-
+    
+    if args.epoch!=0:
+        model = load_model(model, args.epoch)
     # Multi GPU setting
     # model = t.nn.DataParallel(model,device_ids=[0,1])
 
@@ -39,7 +48,7 @@ if __name__ == "__main__":
     # Test the train_loader
     model = model.train()
     multiprocess_idx = 2
-    for epoch in range(EPOCH):
+    for epoch in range(args.epoch, EPOCH):
         train_loss = 0
         correct = 0
         for batch_idx, [data, label] in enumerate(train_loader):
@@ -59,7 +68,7 @@ if __name__ == "__main__":
                                                                                                      train_loader.dataset),
                                                                                                  100. * correct / len(train_loader.dataset)))
         save_model(model, epoch)
-        eval_model_new_thread(epoch, 1)
+        eval_model_new_thread(epoch, 0)
         # LZX pls using the following code instead
         # multiprocessing.Process(target=eval_model(epoch, '0'), args=(multiprocess_idx,))
         # multiprocess_idx += 1
