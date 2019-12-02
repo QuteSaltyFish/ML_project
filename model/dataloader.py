@@ -40,7 +40,7 @@ class data_set(t.utils.data.Dataset):
         seg = data['seg'].astype(np.float32)
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
-        data = np.concatenate([voxel, seg])
+        data = np.stack([voxel, seg], axis=0)
         return data, label
 
     def __len__(self):
@@ -92,12 +92,24 @@ class In_the_wild_set(t.utils.data.Dataset):
             transforms.ToTensor()
         ])
 
+    def sort(self):
+        d = self.test_names
+        sorted_key_list = sorted(d, key=lambda x:(int)(os.path.splitext(x)[0].strip('candidate')))
+        # sorted_key_list = sorted(d, key=lambda x:d[x], reverse=True)   倒序排列
+        print(sorted_key_list)
+        self.test_names = sorted_key_list
+
+        # sorted_dict = map(lambda x:{x:(int)(os.path.splitext(x)[0].strip('candidate'))}, d)
+        # print(sorted_dict)
+
     def __getitem__(self, index):
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
         voxel = self.transform(data['voxel'].astype(np.float32))
         seg = data['seg'].astype(np.float32)
-        data = np.concatenate([voxel, seg])
-        return data
+        data = np.stack([voxel, seg], axis=0)
+        name = os.path.basename(self.test_names[index])
+        name = os.path.splitext(name)[0]
+        return data, name
 
     def __len__(self):
         return len(self.test_names)

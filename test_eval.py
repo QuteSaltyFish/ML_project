@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
-    parser.add_argument("--epoch", default=0, type=int, help="The epoch to be tested")
+    parser.add_argument("--epoch", default=153, type=int, help="The epoch to be tested")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
