@@ -30,15 +30,46 @@ class Conv3D_Net(nn.Module):
         # layers.append(nn.Conv2d(in_channels=n_channels, out_channels=image_channels,
         #                         kernel_size=kernel_size, padding=padding, bias=False))
         # self.Conv3D_Net = nn.Sequential(*layers)
-        self.layer = nn.Sequential(
-            nn.Conv3d(2, 8, 3)
+        self.preprocess = nn.Sequential(
+            nn.AvgPool3d(2),
+            nn.Conv3d(1, 32, 3, padding=8),
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.MaxPool3d(2)
+        )
+        self.Conv = nn.Sequential(
+            nn.Conv3d(32, 32, kernel_size=5, stride=2),
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.Conv3d(32, 32, kernel_size=3, stride=1),
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.MaxPool3d(2),
+            nn.Conv3d(32, 32, kernel_size=3, stride=1),
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(0.1, inplace=True),
+            nn.MaxPool3d(2),
+            nn.Conv3d(32, 16, kernel_size=2, stride=1),
+            nn.BatchNorm3d(16),
+            nn.LeakyReLU(0.1, inplace=True),
+        )
+        self.fc = nn.Sequential(
+            # nn.Linear(6912, 128),
+            nn.Linear(16,2),
+            nn.Dropout(),
+            nn.LogSoftmax()
         )
         self._initialize_weights()
 
+        # self.W = nn.Parameter(t.)
     def forward(self, x):
         # y = x
         # out = self.Conv3D_Net(x)
-        out = self.layer(x)
+        out = self.preprocess(x)
+        out = self.Conv(out)
+        # print(out.shape)
+        tmp = out.view(out.shape[0],-1)
+        out = self.fc(tmp)
         return out
 
     def _initialize_weights(self):
@@ -61,4 +92,4 @@ class Conv3D_Net(nn.Module):
 if __name__ == "__main__":
     device = t.device('cuda' if t.cuda.is_available() else 'cpu')
     model = Conv3D_Net().to(device)
-    summary(model, (2, 100, 100, 100))
+    summary(model, (1, 100, 100, 100))

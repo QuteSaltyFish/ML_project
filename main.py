@@ -8,6 +8,7 @@ import multiprocessing
 from model import dataloader
 from model.DnCNN import DnCNN
 from model import Resnet
+from model import Conv3D_Net
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
 
@@ -24,6 +25,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
     parser.add_argument("--epoch", default=0, type=int, help="The epoch to be tested")
+    parser.add_argument("--test", default=True, type=bool, help="Whether to test after training")
     args = parser.parse_args()
 
     DataSet = dataloader.MyDataSet()
@@ -34,15 +36,15 @@ if __name__ == "__main__":
     test_loader = DataLoader.DataLoader(
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
 
-    model = Resnet.ResNet18().to(DEVICE)
+    model = Resnet.test_net().to(DEVICE)
     
     if args.epoch!=0:
         model = load_model(model, args.epoch)
     # Multi GPU setting
     # model = t.nn.DataParallel(model,device_ids=[0,1])
 
+    # optimizer = t.optim.SGD(model.parameters(), lr=LR)
     optimizer = t.optim.Adam(model.parameters())
-
     criterian = t.nn.NLLLoss().to(DEVICE)
 
     # Test the train_loader

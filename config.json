@@ -11,7 +11,7 @@
     "DEVICE": "cuda",
     "num_workers": 0,
     "epoch": 10000,
-    "lr": 1e-3,
+    "lr": 1e-2,
     "batch_size": 16,
     "gray": false ,
     "Commment:": "LZX pls use: C:\\Users\\ZXLi\\Anaconda3\\envs\\pytorch\\python",
