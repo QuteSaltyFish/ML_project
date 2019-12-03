@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
-    parser.add_argument("--epoch", default=153, type=int, help="The epoch to be tested")
+    parser.add_argument("--epoch", default=28, type=int, help="The epoch to be tested")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     
     criterian = t.nn.NLLLoss()
 
-    model = Resnet.ResNet18().to(DEVICE)
+    model = Resnet.test_net().to(DEVICE)
     # Test the train_loader
     model = load_model(model, args.epoch)
     model = model.eval()
@@ -54,7 +54,10 @@ if __name__ == "__main__":
             out = t.exp(out).squeeze()
             Name.append(name[0])
             Score.append(out[1].item())
-        test_dict = {'name':Name, 'Score':Score}
+        test_dict = {'Id':Name, 'Predicted':Score}
         test_dict_df = pd.DataFrame(test_dict)
         print(test_dict_df)
+        path = 'result'
+        if not os.path.exists(path):
+            os.makedirs(path)
         test_dict_df.to_csv('result/Submission.csv', index=False)

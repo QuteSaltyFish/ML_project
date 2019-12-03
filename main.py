@@ -9,6 +9,7 @@ from model import dataloader
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
+from model.VoxNet import VoxNet
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
 
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     test_loader = DataLoader.DataLoader(
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
 
-    model = Resnet.test_net().to(DEVICE)
+    model = VoxNet(2).to(DEVICE)
     
     if args.epoch!=0:
         model = load_model(model, args.epoch)
