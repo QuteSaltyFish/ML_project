@@ -37,7 +37,7 @@ if __name__ == "__main__":
     test_loader = DataLoader.DataLoader(
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
 
-    model = VoxNet(2).to(DEVICE)
+    model = FC_Net(2).to(DEVICE)
     
     if args.epoch!=0:
         model = load_model(model, args.epoch)

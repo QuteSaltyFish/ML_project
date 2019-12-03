@@ -51,7 +51,7 @@ class data_set(t.utils.data.Dataset):
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         # data = np.expand_dims(seg, axis=0)
-        data = t.stack([voxel, seg], dim=0)
+        data = (voxel*seg).unsqueeze(0)
         return data, label
 
     def __len__(self):
