@@ -46,12 +46,12 @@ class data_set(t.utils.data.Dataset):
     def __getitem__(self, index):
         # print(self.names[index].split('.')[0])
         data = np.load(os.path.join(self.data_root, self.names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))
-        seg = data['seg'].astype(np.float32)
+        voxel = self.transform(data['voxel'].astype(np.float32))/255
+        seg =  self.transform(data['seg'].astype(np.float32))
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         # data = np.expand_dims(seg, axis=0)
-        data = np.stack([voxel, seg], axis=0)
+        data = t.stack([voxel, seg], dim=0)
         return data, label
 
     def __len__(self):

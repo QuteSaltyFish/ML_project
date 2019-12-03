@@ -33,14 +33,17 @@ class VoxNet(torch.nn.Module):
             # nn.Conv3d(2, 4, 3),
             nn.AvgPool3d(2),
             nn.Conv3d(2, 16, 3, padding=8),
+            nn.BatchNorm3d(16),
             nn.AvgPool3d(2)
         )
         self.body = torch.nn.Sequential(
             torch.nn.Conv3d(in_channels=16,
                             out_channels=32, kernel_size=5, stride=2),
+            nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
             torch.nn.Dropout(p=0.2),
             torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3),
+            nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
             torch.nn.MaxPool3d(2),
             torch.nn.Dropout(p=0.3)
