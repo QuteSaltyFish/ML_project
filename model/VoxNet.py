@@ -31,10 +31,15 @@ class VoxNet(torch.nn.Module):
         super(VoxNet, self).__init__()
         self.preprocess = torch.nn.Sequential(
             # nn.Conv3d(2, 4, 3),
-            nn.AvgPool3d(2),
-            nn.Conv3d(1, 16, 3, padding=8),
+            nn.Conv3d(1, 8, 5, 2, padding=1),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(8),
+            nn.Conv3d(8, 16, 9),
+            nn.LeakyReLU(),
             nn.BatchNorm3d(16),
-            nn.AvgPool3d(2)
+            nn.Conv3d(16, 16, 9),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(16),
         )
         self.body = torch.nn.Sequential(
             torch.nn.Conv3d(in_channels=16,
@@ -82,4 +87,4 @@ if __name__ == "__main__":
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = VoxNet(2).to(DEVICE)
-    summary(model, (2, 100, 100, 100))
+    summary(model, (1, 100, 100, 100))

@@ -9,11 +9,11 @@ from model import dataloader
 from model.DnCNN import DnCNN
 
 
-def save_model(model, epoch):
-    dir = 'saved_model/'
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    t.save(model.state_dict(), dir + '{}.pkl'.format(epoch))
+def save_model(model, epoch, dir):
+    DIR = 'saved_model/'+dir
+    if not os.path.exists(DIR):
+        os.makedirs(DIR)
+    t.save(model.state_dict(), DIR + '/{}.pkl'.format(epoch))
 
 
 def load_model(model, epoch):

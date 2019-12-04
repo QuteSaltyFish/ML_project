@@ -71,28 +71,26 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.in_planes = 64
         self.preprocess = torch.nn.Sequential(
-            # nn.Conv3d(2, 4, 3),
-            nn.AvgPool3d(2),
-            nn.Conv3d(2, 32, 3, padding=8),
-            nn.AvgPool3d(2)
-            # nn.Conv3d(8, 8, 3),
-            # nn.Conv3d(8, 16, 3),
-            # nn.Conv3d(16, 32, 3),
-            # nn.Conv3d(32, 32, 3),
-            # nn.Conv3d(32, 32, 3),
-            # nn.Conv3d(32, 32, 3),
-            # nn.Conv3d(32, 32, 4),
+            nn.Conv3d(1, 8, 5, 2, padding=1),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(8),
+            nn.Conv3d(8, 16, 9),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(16),
+            nn.Conv3d(16, 32, 9),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(32),
         )
         self.conv1 = nn.Conv3d(32, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm3d(64)
         
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 16, num_blocks[2], stride=2)
+        self.layer4 = self._make_layer(block, 8, num_blocks[3], stride=2)
         self.linear = nn.Sequential(
-            nn.Linear(512*block.expansion, num_classes),
+            nn.Linear(8*block.expansion, num_classes),
             # nn.Dropout(),
             nn.LogSoftmax()
         )
@@ -162,4 +160,4 @@ if __name__ == "__main__":
     # print(y.size())
     # model = DnCNN().to(device)
     net = net.to('cuda')
-    summary(net, (2, 100, 100, 100))
+    summary(net, (1, 100, 100, 100))

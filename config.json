@@ -10,7 +10,7 @@
     "__comment": "The DEVICE param is set to indicate whether U want to use the GPU or CPU. If U wang to use GPU, then 'cuda' else 'cpu'. ",
     "DEVICE": "cuda",
     "num_workers": 0,
-    "epoch": 10000,
+    "epoch": 150,
     "lr": 1e-2,
     "batch_size": 4,
     "gray": false ,

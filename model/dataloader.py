@@ -9,6 +9,7 @@ from PIL import Image
 import json
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import KFold
 
 class data_set(t.utils.data.Dataset):
     def __init__(self, idx):
@@ -91,8 +92,9 @@ class MyDataSet():
         self.train_set = data_set(self.train_idx)
         self.test_set = data_set(self.test_idx)
         return self.train_set, self.test_set
-
-
+        
+    def __len__(self):
+        return len(self.data_names)
 
 class In_the_wild_set(t.utils.data.Dataset):
     def __init__(self):
@@ -137,16 +139,22 @@ class In_the_wild_set(t.utils.data.Dataset):
 
 if __name__ == "__main__":
 
-    DataSet = MyDataSet()
-    train_set, test_set = DataSet.test_trian_split()
-    wild = In_the_wild_set()
-    print(len(train_set))
-    print(len(test_set))
-    print(train_set[0][0].shape)
-    print(test_set[0][0].shape)
-    print(wild[0].shape)
+    # DataSet = MyDataSet()
+    # train_set, test_set = DataSet.test_trian_split()
+    # wild = In_the_wild_set()
+    # print(len(train_set))
+    # print(len(test_set))
+    # print(train_set[0][0].shape)
+    # print(test_set[0][0].shape)
+    # print(wild[0].shape)
     # test_data = TestingData()
     # for i in range(len(train_data)):
     #     img, label = train_data[i]
     #     tv.transforms.ToPILImage()(img).save('result/input.jpg')
     #     tv.transforms.ToPILImage()(label).save('result/test.jpg')
+    kf = KFold(n_splits=2)
+    a = np.arange(100)
+    print(kf.get_n_splits(a))
+    for idx, [train_index, test_index] in enumerate(kf.split(a)):
+        print(idx)
+        print("TRAIN:", train_index, "TEST:", test_index)
