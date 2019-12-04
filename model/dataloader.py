@@ -92,7 +92,7 @@ class MyDataSet():
         self.train_set = data_set(self.train_idx)
         self.test_set = data_set(self.test_idx)
         return self.train_set, self.test_set
-        
+
     def __len__(self):
         return len(self.data_names)
 
@@ -126,9 +126,9 @@ class In_the_wild_set(t.utils.data.Dataset):
 
     def __getitem__(self, index):
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))
-        seg = data['seg'].astype(np.float32)
-        data = np.stack([voxel, seg], axis=0)
+        voxel = self.transform(data['voxel'].astype(np.float32))/255
+        seg =  self.transform(data['seg'].astype(np.float32))
+        data = (voxel*seg).unsqueeze(0)
         name = os.path.basename(self.test_names[index])
         name = os.path.splitext(name)[0]
         return data, name

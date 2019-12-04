@@ -11,7 +11,8 @@ from model import dataloader
 from model.DnCNN import DnCNN
 from model.func import load_model
 from model import Resnet
-import pandas as pd 
+from model.VoxNet import VoxNet
+import pandas as pd
 if __name__ == "__main__":
     time_start = time.time()
 
@@ -19,22 +20,38 @@ if __name__ == "__main__":
     DEVICE = t.device(config["DEVICE"])
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
-    parser.add_argument("--epoch", default=28, type=int, help="The epoch to be tested")
+    parser.add_argument(
+        "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
+    parser.add_argument("--epoch", default=28, type=int,
+                        help="The epoch to be tested")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     test_set = dataloader.In_the_wild_set()
     test_set.sort()
-    test_loader = DataLoader.DataLoader(test_set, batch_size=1, shuffle=False, num_workers=config["num_workers"])
-    
+    test_loader = DataLoader.DataLoader(
+        test_set, batch_size=1, shuffle=False, num_workers=config["num_workers"])
+
     criterian = t.nn.NLLLoss()
 
-    model = Resnet.test_net().to(DEVICE)
+    model = VoxNet(2).to(DEVICE)
     # Test the train_loader
-    model = load_model(model, args.epoch)
-    model = model.eval()
+    model1 = model.load_state_dict(
+        t.load("saved_model/VoxNet(150epoch)_1_folds/20.pkl"))
+    model1 = model.eval()
+    model2 = model.load_state_dict(
+        t.load("saved_model/VoxNet(150epoch)_2_folds/20.pkl"))
+    model2 = model.eval()
+    model3 = model.load_state_dict(
+        t.load("saved_model/VoxNet(150epoch)_3_folds/20.pkl"))
+    model3 = model.eval()
+    model4 = model.load_state_dict(
+        t.load("saved_model/VoxNet(150epoch)_4_folds/20.pkl"))
+    model4 = model.eval()
+    model5 = model.load_state_dict(
+        t.load("saved_model/VoxNet(150epoch)_5_folds/20.pkl"))
+    model5 = model.eval()
 
     with t.no_grad():
         # Test the test_loader
@@ -43,10 +60,15 @@ if __name__ == "__main__":
         idx = []
         Name = []
         Score = []
-        
-        for batch_idx, [data,name] in enumerate(test_loader):
-            data= data.to(DEVICE)
-            out = model(data)
+        for batch_idx, [data, name] in enumerate(test_loader):
+            data = data.to(DEVICE)
+            out1 = model1(data)
+            out2 = model2(data)
+            out3 = model3(data)
+            out4 = model4(data)
+            out5 = model5(data)
+            out = out1 + out2 + out3+out4+out5
+            out /= 5
             # monitor the upper and lower boundary of output
             # out_max = t.max(out)
             # out_min = t.min(out)
@@ -54,7 +76,7 @@ if __name__ == "__main__":
             out = t.exp(out).squeeze()
             Name.append(name[0])
             Score.append(out[1].item())
-        test_dict = {'Id':Name, 'Predicted':Score}
+        test_dict = {'Id': Name, 'Predicted': Score}
         test_dict_df = pd.DataFrame(test_dict)
         print(test_dict_df)
         path = 'result'
