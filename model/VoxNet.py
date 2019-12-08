@@ -1,6 +1,8 @@
 import torch
 from torchsummary import summary
-from torch import nn 
+from torch import nn
+
+
 class VoxNet(torch.nn.Module):
 
     def __init__(self, num_classes, input_shape=(32, 32, 32)):
@@ -31,15 +33,15 @@ class VoxNet(torch.nn.Module):
         super(VoxNet, self).__init__()
         self.preprocess = torch.nn.Sequential(
             # nn.Conv3d(2, 4, 3),
-            nn.Conv3d(1, 8, 5, 2, padding=1),
-            nn.LeakyReLU(),
+            nn.Conv3d(1, 8, 5, 2),
             nn.BatchNorm3d(8),
+            nn.LeakyReLU(),
             nn.Conv3d(8, 16, 9),
-            nn.LeakyReLU(),
             nn.BatchNorm3d(16),
+            nn.LeakyReLU(),
             nn.Conv3d(16, 16, 9),
-            nn.LeakyReLU(),
             nn.BatchNorm3d(16),
+            nn.LeakyReLU(),
         )
         self.body = torch.nn.Sequential(
             torch.nn.Conv3d(in_channels=16,
@@ -50,7 +52,10 @@ class VoxNet(torch.nn.Module):
             torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
-            torch.nn.MaxPool3d(2),
+            # torch.nn.MaxPool3d(2),
+            torch.nn.Conv3d(32, 32, 3, 2, padding=1),
+            nn.BatchNorm3d(32),
+            torch.nn.LeakyReLU(),
             torch.nn.Dropout(p=0.3)
         )
 
@@ -62,19 +67,18 @@ class VoxNet(torch.nn.Module):
             first_fc_in_features *= n
 
         self.head = torch.nn.Sequential(
-            torch.nn.Linear(first_fc_in_features, 128),
+            torch.nn.Linear(first_fc_in_features, 64),
             torch.nn.ReLU(),
             torch.nn.Dropout(p=0.4),
-            torch.nn.Linear(128, num_classes),
-            torch.nn.LogSoftmax()
+            torch.nn.Linear(64, num_classes)
         )
 
-        # if weights_path is not None:
-        #    weights = torch.load(weights_path)
-        #    if load_body_weights:
-        #        self.body.load_state_dict(weights["body"])
-        #    elif load_head_weights:
-        #        self.head.load_state_dict(weights["head"])
+        self.initializetion()
+
+    def initializetion(self):
+        for m in self.modules():
+            if isinstance(m, (nn.Conv3d, nn.Linear)):
+                nn.init.xavier_normal_(m.weight)
 
     def forward(self, x):
         x = self.preprocess(x)
@@ -82,6 +86,7 @@ class VoxNet(torch.nn.Module):
         x = x.view(x.size(0), -1)
         x = self.head(x)
         return x
+
 
 if __name__ == "__main__":
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

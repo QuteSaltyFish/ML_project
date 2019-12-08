@@ -29,7 +29,7 @@ if __name__ == "__main__":
         "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
     parser.add_argument("--epoch", default=0, type=int,
                         help="The epoch to be tested")
-    parser.add_argument("--name", default='Resnet18', type=str,
+    parser.add_argument("--name", default='Resnet18_normalized', type=str,
                         help="Whether to test after training")
     args = parser.parse_args()
 

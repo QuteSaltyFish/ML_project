@@ -43,6 +43,7 @@ class data_set(t.utils.data.Dataset):
         self.transform = transforms.Compose([
             transforms.ToTensor()
         ])
+    
 
     def __getitem__(self, index):
         # print(self.names[index].split('.')[0])

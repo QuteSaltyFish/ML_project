@@ -17,6 +17,7 @@ from tensorboardX import SummaryWriter
 from sklearn.model_selection import KFold
 
 if __name__ == "__main__":
+    t.backends.cudnn.benchmark=True
     time_start = time.time()
     config = json.load(open("config.json"))
     # os.environ["CUDA_VISIBLE_DEVICES"] = config["GPU"]
@@ -29,7 +30,7 @@ if __name__ == "__main__":
         "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
     parser.add_argument("--epoch", default=0, type=int,
                         help="The epoch to be tested")
-    parser.add_argument("--name", default='VoxNet(150epoch)', type=str,
+    parser.add_argument("--name", default='VoxNet_High_dropout', type=str,
                         help="Whether to test after training")
     args = parser.parse_args()
 
@@ -56,8 +57,8 @@ if __name__ == "__main__":
         # model = t.nn.DataParallel(model,device_ids=[0,1])
 
         # optimizer = t.optim.SGD(model.parameters(), lr=LR)
-        optimizer = t.optim.Adam(model.parameters())
-        criterian = t.nn.NLLLoss().to(DEVICE)
+        optimizer = t.optim.Adam(model.parameters(), weight_decay=0.001)
+        criterian = t.nn.CrossEntropyLoss().to(DEVICE)
 
         # Test the train_loader
         for epoch in range(args.epoch, EPOCH):

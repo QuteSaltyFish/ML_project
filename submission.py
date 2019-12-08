@@ -35,23 +35,27 @@ if __name__ == "__main__":
 
     criterian = t.nn.NLLLoss()
 
-    model = VoxNet(2).to(DEVICE)
+    model1 = VoxNet(2).to(DEVICE)
+    model2 = VoxNet(2).to(DEVICE)
+    model3 = VoxNet(2).to(DEVICE)
+    model4 = VoxNet(2).to(DEVICE)
+    # model5 = VoxNet(2).to(DEVICE)
     # Test the train_loader
-    model1 = model.load_state_dict(
-        t.load("saved_model/VoxNet(150epoch)_1_folds/20.pkl"))
-    model1 = model.eval()
-    model2 = model.load_state_dict(
-        t.load("saved_model/VoxNet(150epoch)_2_folds/20.pkl"))
-    model2 = model.eval()
-    model3 = model.load_state_dict(
-        t.load("saved_model/VoxNet(150epoch)_3_folds/20.pkl"))
-    model3 = model.eval()
-    model4 = model.load_state_dict(
-        t.load("saved_model/VoxNet(150epoch)_4_folds/20.pkl"))
-    model4 = model.eval()
-    model5 = model.load_state_dict(
-        t.load("saved_model/VoxNet(150epoch)_5_folds/20.pkl"))
-    model5 = model.eval()
+    model1.load_state_dict(
+        t.load("saved_model/VoxNet_initialized_1_folds/9.pkl"))
+    model1 = model1.eval()
+    model2.load_state_dict(
+        t.load("saved_model/VoxNet_initialized_2_folds/87.pkl"))
+    model2 = model2.eval()
+    model3.load_state_dict(
+        t.load("saved_model/VoxNet_initialized_3_folds/64.pkl"))
+    model3 = model3.eval()
+    model4.load_state_dict(
+        t.load("saved_model/VoxNet_initialized_4_folds/58.pkl"))
+    model4 = model4.eval()
+    # model5 = model5.load_state_dict(
+    #     t.load("saved_model/VoxNet(150epoch)_5_folds/20.pkl"))
+    # model5 = model5.eval()
 
     with t.no_grad():
         # Test the test_loader
@@ -62,18 +66,20 @@ if __name__ == "__main__":
         Score = []
         for batch_idx, [data, name] in enumerate(test_loader):
             data = data.to(DEVICE)
-            out1 = model1(data)
-            out2 = model2(data)
-            out3 = model3(data)
-            out4 = model4(data)
-            out5 = model5(data)
-            out = out1 + out2 + out3+out4+out5
-            out /= 5
+            out1 = t.nn.functional.softmax(model1(data))
+            out2 = t.nn.functional.softmax(model2(data))
+            out3 = t.nn.functional.softmax(model3(data))
+            out4 = t.nn.functional.softmax(model4(data))
+            
+            # out5 = model5(data)
+            out = out1 + out2 + out3 + out4#+out5
+            out /= 4
+            out = out.squeeze()
             # monitor the upper and lower boundary of output
             # out_max = t.max(out)
             # out_min = t.min(out)
             # out = (out - out_min) / (out_max - out_min)
-            out = t.exp(out).squeeze()
+            # out = t.exp(out).squeeze()
             Name.append(name[0])
             Score.append(out[1].item())
         test_dict = {'Id': Name, 'Predicted': Score}
