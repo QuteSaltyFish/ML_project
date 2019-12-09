@@ -1,5 +1,5 @@
 '''
-used to read the data from the data folder
+used to read the data from the data folder return 32*32*32
 '''
 import torch as t
 import torchvision as tv
@@ -10,7 +10,6 @@ import json
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
-
 
 class data_set(t.utils.data.Dataset):
     def __init__(self, idx):
@@ -26,8 +25,7 @@ class data_set(t.utils.data.Dataset):
 
     def sort(self):
         d = self.names
-        sorted_key_list = sorted(d, key=lambda x: (int)(
-            os.path.splitext(x)[0].strip('candidate')))
+        sorted_key_list = sorted(d, key=lambda x:(int)(os.path.splitext(x)[0].strip('candidate')))
         # sorted_key_list = sorted(d, key=lambda x:d[x], reverse=True)   倒序排列
         # print(sorted_key_list)
         self.names = np.array(sorted_key_list)
@@ -36,7 +34,7 @@ class data_set(t.utils.data.Dataset):
     def read_label(self):
         dataframe = pd.read_csv(self.label_path)
         data = dataframe.values
-        self.label = data[:, 1][self.idx]
+        self.label = data[:,1][self.idx]
 
     def init_transform(self):
         """
@@ -49,12 +47,13 @@ class data_set(t.utils.data.Dataset):
     def __getitem__(self, index):
         # print(self.names[index].split('.')[0])
         data = np.load(os.path.join(self.data_root, self.names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg = self.transform(data['seg'].astype(np.float32))
-        # label = self.label.astype(np.float32)[index]
+        voxel = (self.transform(data['voxel'].astype(np.float32))/255).unsqueeze(0)
+        seg =  self.transform(data['seg'].astype(np.float32)).unsqueeze(0)
+
         label = self.label[index]
-        # data = np.expand_dims(seg, axis=0)
-        data = (voxel*seg).unsqueeze(0)
+        
+        data = (voxel*seg)
+        
         return data, label
 
     def __len__(self):
@@ -70,20 +69,10 @@ class MyDataSet():
         self.DEVICE = t.device(self.config["DEVICE"])
         self.gray = self.config["gray"]
         self.sort()
-        self.init_transform()
-
-    def init_transform(self):
-        """
-        The preprocess of the img and label
-        """
-        self.transform = transforms.Compose([
-            transforms.ToTensor()
-        ])
 
     def sort(self):
         d = self.data_names
-        sorted_key_list = sorted(d, key=lambda x: (int)(
-            os.path.splitext(x)[0].strip('candidate')))
+        sorted_key_list = sorted(d, key=lambda x:(int)(os.path.splitext(x)[0].strip('candidate')))
         # sorted_key_list = sorted(d, key=lambda x:d[x], reverse=True)   倒序排列
         # print(sorted_key_list)
         self.data_names = np.array(sorted_key_list)
@@ -105,20 +94,8 @@ class MyDataSet():
         self.test_set = data_set(self.test_idx)
         return self.train_set, self.test_set
 
-    def __getitem__(self, index):
-        # print(self.names[index].split('.')[0])
-        data = np.load(os.path.join(self.data_root, self.data_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg = self.transform(data['seg'].astype(np.float32))
-        # label = self.label.astype(np.float32)[index]
-        # label = self.label[index]
-        # data = np.expand_dims(seg, axis=0)
-        data = (voxel*seg).unsqueeze(0)
-        return seg 
-
     def __len__(self):
         return len(self.data_names)
-
 
 class In_the_wild_set(t.utils.data.Dataset):
     def __init__(self):
@@ -140,8 +117,7 @@ class In_the_wild_set(t.utils.data.Dataset):
 
     def sort(self):
         d = self.test_names
-        sorted_key_list = sorted(d, key=lambda x: (int)(
-            os.path.splitext(x)[0].strip('candidate')))
+        sorted_key_list = sorted(d, key=lambda x:(int)(os.path.splitext(x)[0].strip('candidate')))
         # sorted_key_list = sorted(d, key=lambda x:d[x], reverse=True)   倒序排列
         # print(sorted_key_list)
         self.test_names = sorted_key_list
@@ -150,9 +126,13 @@ class In_the_wild_set(t.utils.data.Dataset):
         # print(sorted_dict)
 
     def __getitem__(self, index):
+        left_bound = 24
+        right_bound= 56
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
         voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg = self.transform(data['seg'].astype(np.float32))
+        seg =  self.transform(data['seg'].astype(np.float32))
+        voxel = voxel[..., left_bound:right_bound, left_bound:right_bound, left_bound:right_bound]
+        seg = seg[..., left_bound:right_bound, left_bound:right_bound, left_bound:right_bound]
         data = (voxel*seg).unsqueeze(0)
         name = os.path.basename(self.test_names[index])
         name = os.path.splitext(name)[0]

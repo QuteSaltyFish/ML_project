@@ -10,11 +10,12 @@
     "__comment": "The DEVICE param is set to indicate whether U want to use the GPU or CPU. If U wang to use GPU, then 'cuda' else 'cpu'. ",
     "DEVICE": "cuda",
     "num_workers": 0,
-    "epoch": 100,
-    "lr": 1e-2,
+    "epoch": 200,
+    "lr": 3e-4,
+    "Weight_Decay": 0.01,
     "batch_size": 16,
     "gray": false ,
     "Commment:": "LZX pls use: C:\\Users\\ZXLi\\Anaconda3\\envs\\pytorch\\python",
     "Commment_:": "WMK pls use: /home/wangmingke/anaconda3/envs/pytorch/bin/python",
     "python_path": "/home/wangmingke/anaconda3/envs/pytorch/bin/python"
-  }
+}

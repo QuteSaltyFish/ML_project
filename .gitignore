@@ -106,5 +106,6 @@ venv.bak/
 # data folder
 data/
 result/
+runs/
 saved_model/
 nohup.out

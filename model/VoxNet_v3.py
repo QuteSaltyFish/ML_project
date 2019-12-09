@@ -2,6 +2,9 @@ import torch
 from torchsummary import summary
 from torch import nn
 
+# change the input to 100*100*100 + 32*32*32 + 8*8*8 
+# priimid triaining
+
 
 class VoxNet(torch.nn.Module):
 
@@ -31,46 +34,31 @@ class VoxNet(torch.nn.Module):
         Default head weights are pretrained with ModelNet10.
         """
         super(VoxNet, self).__init__()
-        self.preprocess = torch.nn.Sequential(
-            # nn.Conv3d(2, 4, 3),
-            nn.Conv3d(1, 8, 5, 2),
-            nn.BatchNorm3d(8),
-            nn.LeakyReLU(),
-            nn.Conv3d(8, 16, 9),
-            nn.BatchNorm3d(16),
-            nn.LeakyReLU(),
-            nn.Conv3d(16, 16, 9),
-            nn.BatchNorm3d(16),
-            nn.LeakyReLU(),
-        )
         self.body = torch.nn.Sequential(
-            torch.nn.Conv3d(in_channels=16,
-                            out_channels=32, kernel_size=5, stride=2),
+            torch.nn.Conv3d(in_channels=1,
+                            out_channels=32, kernel_size=3, stride=1),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
-            torch.nn.Dropout(p=0.2),
+            # torch.nn.Dropout(p=0.2),
             torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
-            # torch.nn.MaxPool3d(2),
-            torch.nn.Conv3d(32, 32, 3, 2, padding=1),
-            nn.BatchNorm3d(32),
-            torch.nn.LeakyReLU(),
-            torch.nn.Dropout(p=0.3)
+            torch.nn.MaxPool3d(2),
+            # torch.nn.Dropout(p=0.3)
         )
 
         # Trick to accept different input shapes
         x = self.body(torch.autograd.Variable(
-            torch.rand((16, 16) + input_shape)))
+            torch.rand((1, 1) + input_shape)))
         first_fc_in_features = 1
         for n in x.size()[1:]:
             first_fc_in_features *= n
 
         self.head = torch.nn.Sequential(
-            torch.nn.Linear(first_fc_in_features, 64),
+            torch.nn.Linear(first_fc_in_features, 128),
             torch.nn.ReLU(),
-            torch.nn.Dropout(p=0.4),
-            torch.nn.Linear(64, num_classes)
+            # torch.nn.Dropout(p=0.4),
+            torch.nn.Linear(128, num_classes),
         )
 
         self.initializetion()
@@ -81,7 +69,7 @@ class VoxNet(torch.nn.Module):
                 nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x):
-        x = self.preprocess(x)
+        x = torch.nn.functional.interpolate(x, [32,32,32], mode='trilinear')
         x = self.body(x)
         x = x.view(x.size(0), -1)
         x = self.head(x)
@@ -92,4 +80,4 @@ if __name__ == "__main__":
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = VoxNet(2).to(DEVICE)
-    summary(model, (1, 100, 100, 100))
+    summary(model, (1, 32, 32, 32))

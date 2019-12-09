@@ -1,5 +1,5 @@
 '''
-used to read the data from the data folder
+used to read the data from the data folder return 32*32*32, add data argumentation
 '''
 import torch as t
 import torchvision as tv
@@ -22,7 +22,8 @@ class data_set(t.utils.data.Dataset):
         self.names = self.names[idx]
         self.label_path = self.config['Label_Path']
         self.init_transform()
-        self.read_label()
+        self.load_data()
+        self.load_label()
 
     def sort(self):
         d = self.names
@@ -33,7 +34,43 @@ class data_set(t.utils.data.Dataset):
         self.names = np.array(sorted_key_list)
         # print(self.data_names)
 
-    def read_label(self):
+    def data_argumentation(self):
+        old_len = len(self.names)
+        new_label = []
+        for idx in range(old_len):
+            voxel = self.voxel[idx]
+            seg = self.seg[idx]
+
+            # use permute to change the point of view
+            self.voxel.append(np.transpose(voxel, [0, 2, 1]))
+            self.seg.append(np.transpose(seg, [0, 2, 1]))
+            new_label.append(self.label[idx])
+
+            # mirror the image
+            # x axis
+            self.voxel.append(voxel[..., ::-1].copy())
+            self.seg.append(seg[..., ::-1].copy())
+            new_label.append(self.label[idx])
+            # y axis
+            self.voxel.append(voxel[..., ::-1, :].copy())
+            self.seg.append(seg[..., ::-1, :].copy())
+            new_label.append(self.label[idx])
+
+        # sum the labels
+        self.label = np.concatenate([self.label, np.array(new_label)])
+        print('data argumentation done.')
+
+    def load_data(self):
+        voxel = []
+        seg = []
+        for idx in range(len(self.names)):
+            data = np.load(os.path.join(self.data_root, self.names[idx]))
+            voxel.append((data['voxel'].astype(np.float32))/255)
+            seg.append(data['seg'].astype(np.float32))
+        self.voxel = voxel
+        self.seg = seg
+
+    def load_label(self):
         dataframe = pd.read_csv(self.label_path)
         data = dataframe.values
         self.label = data[:, 1][self.idx]
@@ -47,18 +84,18 @@ class data_set(t.utils.data.Dataset):
         ])
 
     def __getitem__(self, index):
-        # print(self.names[index].split('.')[0])
-        data = np.load(os.path.join(self.data_root, self.names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg = self.transform(data['seg'].astype(np.float32))
+        voxel = self.transform(self.voxel[index])
+        seg = self.transform(self.seg[index])
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         # data = np.expand_dims(seg, axis=0)
-        data = (voxel*seg).unsqueeze(0)
+        data = (voxel*seg).unsqueeze(0).unsqueeze(0)
+        data = t.nn.functional.interpolate(
+            data, [32, 32, 32], mode='trilinear').squeeze(0)
         return data, label
 
     def __len__(self):
-        return len(self.names)
+        return len(self.label)
 
 
 class MyDataSet():
@@ -70,15 +107,6 @@ class MyDataSet():
         self.DEVICE = t.device(self.config["DEVICE"])
         self.gray = self.config["gray"]
         self.sort()
-        self.init_transform()
-
-    def init_transform(self):
-        """
-        The preprocess of the img and label
-        """
-        self.transform = transforms.Compose([
-            transforms.ToTensor()
-        ])
 
     def sort(self):
         d = self.data_names
@@ -104,17 +132,6 @@ class MyDataSet():
         self.train_set = data_set(self.train_idx)
         self.test_set = data_set(self.test_idx)
         return self.train_set, self.test_set
-
-    def __getitem__(self, index):
-        # print(self.names[index].split('.')[0])
-        data = np.load(os.path.join(self.data_root, self.data_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg = self.transform(data['seg'].astype(np.float32))
-        # label = self.label.astype(np.float32)[index]
-        # label = self.label[index]
-        # data = np.expand_dims(seg, axis=0)
-        data = (voxel*seg).unsqueeze(0)
-        return seg 
 
     def __len__(self):
         return len(self.data_names)
@@ -150,10 +167,14 @@ class In_the_wild_set(t.utils.data.Dataset):
         # print(sorted_dict)
 
     def __getitem__(self, index):
+        left_bound = 24
+        right_bound = 56
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
         voxel = self.transform(data['voxel'].astype(np.float32))/255
         seg = self.transform(data['seg'].astype(np.float32))
-        data = (voxel*seg).unsqueeze(0)
+        data = (voxel*seg).unsqueeze(0).unsqueeze(0)
+        data = t.nn.functional.interpolate(
+            data, [32, 32, 32], mode='trilinear').squeeze(0)
         name = os.path.basename(self.test_names[index])
         name = os.path.splitext(name)[0]
         return data, name
@@ -164,8 +185,11 @@ class In_the_wild_set(t.utils.data.Dataset):
 
 if __name__ == "__main__":
 
-    # DataSet = MyDataSet()
-    # train_set, test_set = DataSet.test_trian_split()
+    DataSet = MyDataSet()
+    train_set, test_set = DataSet.test_trian_split()
+    train_set.data_argumentation()
+    print(train_set[0])
+    print(len(train_set))
     # wild = In_the_wild_set()
     # print(len(train_set))
     # print(len(test_set))
@@ -177,9 +201,10 @@ if __name__ == "__main__":
     #     img, label = train_data[i]
     #     tv.transforms.ToPILImage()(img).save('result/input.jpg')
     #     tv.transforms.ToPILImage()(label).save('result/test.jpg')
-    kf = KFold(n_splits=2)
-    a = np.arange(100)
-    print(kf.get_n_splits(a))
-    for idx, [train_index, test_index] in enumerate(kf.split(a)):
-        print(idx)
-        print("TRAIN:", train_index, "TEST:", test_index)
+    # kf = KFold(n_splits=2)
+    # a = np.arange(100)
+    # print(kf.get_n_splits(a))
+    # for idx, [train_index, test_index] in enumerate(kf.split(a)):
+    #     print(idx)
+    #     print("TRAIN:", train_index, "TEST:", test_index)
+    # dataset = 
