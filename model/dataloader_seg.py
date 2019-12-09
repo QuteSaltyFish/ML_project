@@ -48,13 +48,12 @@ class data_set(t.utils.data.Dataset):
         # print(self.names[index].split('.')[0])
         data = np.load(os.path.join(self.data_root, self.names[index]))
         voxel = (self.transform(data['voxel'].astype(np.float32))/255).unsqueeze(0)
-        seg =  self.transform(data['seg'].astype(np.float32)).unsqueeze(0)
+        seg =  self.transform(data['seg'].astype(np.long))
 
         label = self.label[index]
         
-        data = (voxel*seg)
         
-        return [data, label]
+        return [voxel, seg], label
 
     def __len__(self):
         return len(self.names)
@@ -126,17 +125,14 @@ class In_the_wild_set(t.utils.data.Dataset):
         # print(sorted_dict)
 
     def __getitem__(self, index):
-        left_bound = 24
-        right_bound= 56
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg =  self.transform(data['seg'].astype(np.float32))
-        voxel = voxel[..., left_bound:right_bound, left_bound:right_bound, left_bound:right_bound]
-        seg = seg[..., left_bound:right_bound, left_bound:right_bound, left_bound:right_bound]
-        data = (voxel*seg).unsqueeze(0)
+
+        voxel = (self.transform(data['voxel'].astype(np.float32))/255).unsqueeze(0)
+        seg =  self.transform(data['seg'].astype(np.long))
+
         name = os.path.basename(self.test_names[index])
         name = os.path.splitext(name)[0]
-        return data, name
+        return [voxel, seg], name
 
     def __len__(self):
         return len(self.test_names)
