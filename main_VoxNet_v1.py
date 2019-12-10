@@ -21,10 +21,10 @@ from sklearn.model_selection import KFold
 t.backends.cudnn.benchmark=True
 time_start = time.time()
 config = json.load(open("config.json"))
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
-LR = 1e-3
+LR = 1e-4
 EPOCH = config['epoch']
 WD = config['Weight_Decay']
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_v1_1e-5', type=str,
+parser.add_argument("--name", default='VoxNet_v1_{}'.format(LR), type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -43,7 +43,7 @@ np.random.seed(1998)
 kf = KFold(n_splits=5)
 idx = np.arange(len(DataSet))
 np.random.shuffle(idx)
-print(kf.get_n_splits(idx))
+print(args.name, kf.get_n_splits(idx))
 # shuffle the data before the
 for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
     writer = SummaryWriter('runs/{}_{}_Fold'.format(args.name, K_idx+1))
