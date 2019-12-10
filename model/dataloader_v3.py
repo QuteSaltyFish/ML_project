@@ -10,20 +10,39 @@ import json
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
-
+import os
 
 class data_set(t.utils.data.Dataset):
-    def __init__(self, idx):
+    def __init__(self, idx, train):
         self.idx = idx
+        self.train = train
+        
         self.config = json.load(open('config.json'))
+        self.python_path = self.config["python_path"]
         self.data_root = self.config["Taining_Dir"]
         self.names = np.array(os.listdir(self.data_root))
         self.sort()
         self.names = self.names[idx]
         self.label_path = self.config['Label_Path']
+        
+
+        # the direction used to save new tensor, 
+        self.Training_Dir = self.config["Training_Tensor_Dir"]
+        self.Testinng_Dir = self.config["Testing_Tensor_Dir"]
+        if self.train:
+            self.dir = self.Training_Dir
+        else:
+            self.dir = self.Testinng_Dir
+        
+        os.system('rm -rf {}'.format(self.dir))
+        os.makedirs(self.dir)
+
         self.init_transform()
         self.load_data()
         self.load_label()
+
+        if train:
+            self.data_argumentation()
 
     def sort(self):
         d = self.names
@@ -35,40 +54,38 @@ class data_set(t.utils.data.Dataset):
         # print(self.data_names)
 
     def data_argumentation(self):
+        os.system('rm nohup.out')
         old_len = len(self.names)
+        new_idx = len(self.names)
         new_label = []
-        for idx in range(old_len):
-            voxel = self.voxel[idx]
-            seg = self.seg[idx]
-
-            # use permute to change the point of view
-            self.voxel.append(np.transpose(voxel, [0, 2, 1]))
-            self.seg.append(np.transpose(seg, [0, 2, 1]))
-            new_label.append(self.label[idx])
-
-            # mirror the image
-            # x axis
-            self.voxel.append(voxel[..., ::-1].copy())
-            self.seg.append(seg[..., ::-1].copy())
-            new_label.append(self.label[idx])
-            # y axis
-            self.voxel.append(voxel[..., ::-1, :].copy())
-            self.seg.append(seg[..., ::-1, :].copy())
-            new_label.append(self.label[idx])
-
+        if not os.path.exists(os.path.join(self.dir, '{}.pth'.format(old_len))):
+            print('Not exist')
+        for idx in range(0, old_len):
+            if idx%100==0 and idx!=0:
+                while(True):
+                    if os.path.exists(os.path.join(self.dir, '{}.pth'.format(new_idx-1))):
+                        break
+            # if idx==371:
+            #     print("DEBUG")
+            os.system('nohup {} -u /home/wangmingke/Desktop/HomeWork/ML_project/model/fast_data_argument.py --dir={} --origin={} --idx={} &'.format(self.python_path, self.dir, idx, new_idx))
+            for i in range(4):
+                new_label.append(self.label[idx])
+                new_idx += 1
         # sum the labels
         self.label = np.concatenate([self.label, np.array(new_label)])
-        print('data argumentation done.')
+        while(True):
+            if os.path.exists(os.path.join(self.dir, '{}.pth'.format(new_idx-1))):
+                break
+        
+        print('data argumentation done, we got {} data'.format(new_idx-1))
 
     def load_data(self):
-        voxel = []
-        seg = []
+        
         for idx in range(len(self.names)):
             data = np.load(os.path.join(self.data_root, self.names[idx]))
-            voxel.append((data['voxel'].astype(np.float32))/255)
-            seg.append(data['seg'].astype(np.float32))
-        self.voxel = voxel
-        self.seg = seg
+            voxel = self.transform((data['voxel'].astype(np.float32))/255)
+            seg = self.transform(data['seg'].astype(np.float32))
+            t.save([voxel, seg], os.path.join(self.dir, '{}.pth'.format(idx)))
 
     def load_label(self):
         dataframe = pd.read_csv(self.label_path)
@@ -84,8 +101,7 @@ class data_set(t.utils.data.Dataset):
         ])
 
     def __getitem__(self, index):
-        voxel = self.transform(self.voxel[index])
-        seg = self.transform(self.seg[index])
+        [voxel, seg] = t.load(os.path.join(self.dir, '{}.pth'.format(index)))
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         # data = np.expand_dims(seg, axis=0)
@@ -129,8 +145,8 @@ class MyDataSet():
         self.train_idx = idx[:(int)(length*p)]
         self.test_idx = idx[(int)(length*p):]
 
-        self.train_set = data_set(self.train_idx)
-        self.test_set = data_set(self.test_idx)
+        self.train_set = data_set(self.train_idx, train=True)
+        self.test_set = data_set(self.test_idx, train=False)
         return self.train_set, self.test_set
 
     def __len__(self):
@@ -185,7 +201,7 @@ if __name__ == "__main__":
 
     DataSet = MyDataSet()
     train_set, test_set = DataSet.test_trian_split()
-    train_set.data_argumentation()
+    
     print(train_set[0])
     print(len(train_set))
     # wild = In_the_wild_set()

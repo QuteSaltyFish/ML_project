@@ -1,5 +1,7 @@
 {
     "Taining_Dir": "data/train_val",
+    "Training_Tensor_Dir": "data/Training_Tensor_data",
+    "Testing_Tensor_Dir":   "data/Testing_Tensor_data",
     "Label_Path": "data/train_val.csv",
     "Test_Dir": "data/test",
     "_comment_": "The shape of the tensor feed into the network (namly HxW)",
