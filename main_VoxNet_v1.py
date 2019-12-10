@@ -10,7 +10,7 @@ from model.dataloader_v2 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
-from model.VoxNet_v2 import VoxNet
+from model.VoxNet_v1 import VoxNet
 from model.baseline import FC_Net
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
@@ -24,7 +24,7 @@ config = json.load(open("config.json"))
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
-LR = 1e-6
+LR = 1e-3
 EPOCH = config['epoch']
 WD = config['Weight_Decay']
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_V2_1e-6', type=str,
+parser.add_argument("--name", default='VoxNet_v1_1e-5', type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -69,8 +69,8 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
         model = model.train()
         train_loss = 0
         correct = 0
-        if epoch>60:
-            optimizer.param_groups[0]['lr'] = 1e-5
+        # if epoch>50:
+        #     optimizer.param_groups[0]['lr'] = 1e-5
         for batch_idx, [data, label] in enumerate(train_loader):
             data, label = data.to(DEVICE), label.to(DEVICE)
             out = model(data).squeeze()

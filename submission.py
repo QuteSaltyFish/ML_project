@@ -9,7 +9,7 @@ from model.dataloader_v3 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
-from model.VoxNet_v2 import VoxNet
+from model.VoxNet_66 import VoxNet
 from model.baseline import FC_Net
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
@@ -45,24 +45,26 @@ if __name__ == "__main__":
     model5 = VoxNet(2).to(DEVICE)
     # Test the train_loader
     model1.load_state_dict(
-        t.load("saved_model/VoxNet_V2_no_DA_1_folds/37.pkl"))
+        t.load("saved_model/VoxNet_final/99.pkl"))
     model1.eval()
+    # model1.load_state_dict(
+    #     t.load("/home/wangmingke/Desktop/HomeWork/ML_project/saved_model/VoxNet_V2_final/72.pkl"))
+    # model1.eval()
+    # model2.load_state_dict(
+    #     t.load("saved_model/VoxNet_V2_no_DA_2_folds/56.pkl"))
+    # model2.eval()
 
-    model2.load_state_dict(
-        t.load("saved_model/VoxNet_V2_no_DA_2_folds/56.pkl"))
-    model2.eval()
+    # model3.load_state_dict(
+    #     t.load("saved_model/VoxNet_V2_no_DA_3_folds/38.pkl"))
+    # model3.eval()
 
-    model3.load_state_dict(
-        t.load("saved_model/VoxNet_V2_no_DA_3_folds/38.pkl"))
-    model3.eval()
+    # model4.load_state_dict(
+    #     t.load("saved_model/VoxNet_V2_no_DA_4_folds/55.pkl"))
+    # model4.eval()
 
-    model4.load_state_dict(
-        t.load("saved_model/VoxNet_V2_no_DA_4_folds/55.pkl"))
-    model4.eval()
-
-    model5.load_state_dict(
-        t.load("saved_model/VoxNet_V2_no_DA_5_folds/22.pkl"))
-    model5.eval()
+    # model5.load_state_dict(
+    #     t.load("saved_model/VoxNet_V2_no_DA_5_folds/22.pkl"))
+    # model5.eval()
     with t.no_grad():
         # Test the test_loader
         test_loss = 0
@@ -73,13 +75,13 @@ if __name__ == "__main__":
         for batch_idx, [data, name] in enumerate(test_loader):
             data = data.to(DEVICE)
             out1 = t.nn.functional.softmax(model1(data))
-            out2 = t.nn.functional.softmax(model2(data))
-            out3 = t.nn.functional.softmax(model3(data))
-            out4 = t.nn.functional.softmax(model4(data))
-            out5 = t.nn.functional.softmax(model5(data))
+            # out2 = t.nn.functional.softmax(model2(data))
+            # out3 = t.nn.functional.softmax(model3(data))
+            # out4 = t.nn.functional.softmax(model4(data))
+            # out5 = t.nn.functional.softmax(model5(data))
             # out5 = model5(data)
-            out = out1 + out2 + out3 + out4 +out5
-            out /= 5
+            out = out1 #+ out2 + out3 + out4 +out5
+            # out /= 5
             out = out.squeeze()
             # monitor the upper and lower boundary of output
             # out_max = t.max(out)
@@ -94,4 +96,4 @@ if __name__ == "__main__":
         path = 'result'
         if not os.path.exists(path):
             os.makedirs(path)
-        test_dict_df.to_csv('result/Submission.csv', index=False)
+        test_dict_df.to_csv('result/Submission2.csv', index=False)

@@ -25,6 +25,7 @@ config = json.load(open("config.json"))
 # os.environ["CUDA_VISIBLE_DEVICES"] = config["GPU"]
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
+LR = 1e-1
 EPOCH = config['epoch']
 WD = config['Weight_Decay']
 BATCH_SIZE = config['batch_size']
@@ -34,7 +35,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_Adam_3e-4', type=str,
+parser.add_argument("--name", default='UNet_1e-2', type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -48,7 +49,7 @@ np.random.shuffle(idx)
 print(kf.get_n_splits(idx))
 # shuffle the data before the
 for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
-    # writer = SummaryWriter('runs/{}_{}_Fold'.format(args.name, K_idx+1))
+    writer = SummaryWriter('runs/{}_{}_Fold'.format(args.name, K_idx+1))
 
     train_data, test_data = data_set(train_idx), data_set(test_idx)
     # train_data.data_argumentation()
@@ -73,10 +74,9 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
         for batch_idx, [data, label] in enumerate(train_loader):
             [vox, seg] = data
             vox, seg, label = vox.to(DEVICE), seg.to(DEVICE), label.to(DEVICE)
-            [class_pre, seg_pre] = model(vox)
-            loss = class_criterian(class_pre, label) 
-            for i in range(seg.shape[-3]):
-                loss += seg_criterian(seg_pre[...,i,:,:], seg[...,i,:,:])
+            [class_pre, seg_pre] = model(vox) 
+            loss = class_criterian(class_pre, label)
+            loss += seg_criterian(seg_pre, seg.reshape(-1))
             
 
             optimizer.zero_grad()
@@ -84,7 +84,7 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
             optimizer.step()
 
             train_loss += loss
-            pred = out.max(1, keepdim=True)[1]  # 找到概率最大的下标
+            pred = class_pre.max(1, keepdim=True)[1]  # 找到概率最大的下标
             correct += pred.eq(label.view_as(pred)).sum().item()
         train_loss /= len(train_loader.dataset)
         train_acc = 100. * correct / len(train_loader.dataset)
@@ -106,12 +106,12 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
                 [vox, seg] = data
                 vox, seg, label = vox.to(DEVICE), seg.to(DEVICE), label.to(DEVICE)
                 [class_pre, seg_pre] = model(vox)
-                class_loss = criterian(class_pre, label) 
-                seg_loss = criterian(seg_pre, seg)
+                class_loss = class_criterian(class_pre, label) 
+                seg_loss = seg_criterian(seg_pre, seg.view(-1))
                 loss = class_loss + seg_loss
 
                 test_loss += loss
-                pred = out.max(1, keepdim=True)[1]  # 找到概率最大的下标
+                pred = class_pre.max(1, keepdim=True)[1]  # 找到概率最大的下标
                 correct += pred.eq(label.view_as(pred)).sum().item()
             # store params
             for name, param in model.named_parameters():
@@ -126,7 +126,6 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
             
             print('Epoch: {}, Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
                 epoch, test_loss, correct, len(test_loader.dataset), test_acc))
-        save_model(model, epoch, '{}_{}_folds'.format(args.name, K_idx+1))
         # eval_model_new_thread(epoch, 0)
         # LZX pls using the following code instead
         # multiprocessing.Process(target=eval_model(epoch, '0'), args=(multiprocess_idx,))

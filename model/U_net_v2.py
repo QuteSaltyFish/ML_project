@@ -9,7 +9,7 @@ class Modified3DUNet(nn.Module):
 		self.base_n_filter = base_n_filter
 
 		self.preprocess = nn.Conv3d(self.in_channels, self.in_channels, kernel_size=5)
-		self.postprocess = nn.ConvTranspose3d(2, 1, kernel_size=5)
+		self.postprocess = nn.ConvTranspose3d(2, 2, kernel_size=5)
 		
 		
 		
@@ -206,8 +206,8 @@ class Modified3DUNet(nn.Module):
 		ds1_ds2_sum_upscale_ds3_sum_upscale = self.upsacle(ds1_ds2_sum_upscale_ds3_sum)
 
 		out = out_pred + ds1_ds2_sum_upscale_ds3_sum_upscale
-		seg_layer = self.postprocess(out).squeeze(1)
-		# seg_layer = seg_layer.permute(0, 2, 3, 4, 1).contiguous().view(-1, self.n_classes)
+		seg_layer = self.postprocess(out)
+		seg_layer = seg_layer.permute(0, 2, 3, 4, 1).contiguous().view(-1, self.n_classes)
 		# out = out.view(-1, self.n_classes)
 		return [fc_out, seg_layer]
 

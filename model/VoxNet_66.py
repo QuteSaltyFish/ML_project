@@ -2,8 +2,6 @@ import torch
 from torchsummary import summary
 from torch import nn
 
-# change the input to 32*32*32
-
 
 class VoxNet(torch.nn.Module):
 
@@ -39,30 +37,28 @@ class VoxNet(torch.nn.Module):
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
             # torch.nn.Dropout(p=0.2),
-            torch.nn.Conv3d(in_channels=32, out_channels=64, kernel_size=3),
-            nn.BatchNorm3d(64),
-            torch.nn.LeakyReLU(),
-            torch.nn.MaxPool3d(2),
-
-            torch.nn.Conv3d(in_channels=64, out_channels=32, kernel_size=3),
+            torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3, stride=2),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
-            torch.nn.MaxPool3d(2),
+            # torch.nn.MaxPool3d(2),
+            # torch.nn.Conv3d(32, 32, 3, 2, padding=1),
+            # nn.BatchNorm3d(32),
+            # torch.nn.LeakyReLU(),
             # torch.nn.Dropout(p=0.3)
         )
 
         # Trick to accept different input shapes
         x = self.body(torch.autograd.Variable(
-            torch.rand((1, 1) + input_shape)))
+            torch.rand((16, 1) + input_shape)))
         first_fc_in_features = 1
         for n in x.size()[1:]:
             first_fc_in_features *= n
 
         self.head = torch.nn.Sequential(
-            torch.nn.Linear(first_fc_in_features, 64),
+            torch.nn.Linear(first_fc_in_features, 128),
             torch.nn.ReLU(),
             # torch.nn.Dropout(p=0.4),
-            torch.nn.Linear(64, num_classes),
+            torch.nn.Linear(128, num_classes)
         )
 
         self.initializetion()
@@ -84,4 +80,4 @@ if __name__ == "__main__":
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = VoxNet(2).to(DEVICE)
-    summary(model, (1, 32, 32, 32))
+    summary(model, (1, 100, 100, 100))

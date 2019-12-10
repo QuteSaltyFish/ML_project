@@ -167,8 +167,6 @@ class In_the_wild_set(t.utils.data.Dataset):
         # print(sorted_dict)
 
     def __getitem__(self, index):
-        left_bound = 24
-        right_bound = 56
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
         voxel = self.transform(data['voxel'].astype(np.float32))/255
         seg = self.transform(data['seg'].astype(np.float32))

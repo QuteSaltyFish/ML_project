@@ -31,20 +31,20 @@ class VoxNet(torch.nn.Module):
         Default head weights are pretrained with ModelNet10.
         """
         super(VoxNet, self).__init__()
-        self.preprocess = torch.nn.Sequential(
-            # nn.Conv3d(2, 4, 3),
-            nn.Conv3d(1, 8, 5, 2),
-            nn.BatchNorm3d(8),
-            nn.LeakyReLU(),
-            nn.Conv3d(8, 16, 9),
-            nn.BatchNorm3d(16),
-            nn.LeakyReLU(),
-            nn.Conv3d(16, 16, 9),
-            nn.BatchNorm3d(16),
-            nn.LeakyReLU(),
-        )
+        # self.preprocess = torch.nn.Sequential(
+        #     # nn.Conv3d(2, 4, 3),
+        #     nn.Conv3d(1, 8, 5, 2),
+        #     nn.BatchNorm3d(8),
+        #     nn.LeakyReLU(),
+        #     nn.Conv3d(8, 16, 9),
+        #     nn.BatchNorm3d(16),
+        #     nn.LeakyReLU(),
+        #     nn.Conv3d(16, 16, 9),
+        #     nn.BatchNorm3d(16),
+        #     nn.LeakyReLU(),
+        # )
         self.body = torch.nn.Sequential(
-            torch.nn.Conv3d(in_channels=16,
+            torch.nn.Conv3d(in_channels=1,
                             out_channels=32, kernel_size=5, stride=2),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
@@ -61,7 +61,7 @@ class VoxNet(torch.nn.Module):
 
         # Trick to accept different input shapes
         x = self.body(torch.autograd.Variable(
-            torch.rand((16, 16) + input_shape)))
+            torch.rand((16, 1) + input_shape)))
         first_fc_in_features = 1
         for n in x.size()[1:]:
             first_fc_in_features *= n
@@ -81,7 +81,7 @@ class VoxNet(torch.nn.Module):
                 nn.init.xavier_uniform_(m.weight)
 
     def forward(self, x):
-        x = self.preprocess(x)
+        # x = self.preprocess(x)
         x = self.body(x)
         x = x.view(x.size(0), -1)
         x = self.head(x)
@@ -92,4 +92,4 @@ if __name__ == "__main__":
     DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     model = VoxNet(2).to(DEVICE)
-    summary(model, (1, 100, 100, 100))
+    summary(model, (1, 32, 32, 32))
