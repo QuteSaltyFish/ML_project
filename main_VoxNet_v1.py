@@ -24,7 +24,7 @@ config = json.load(open("config.json"))
 # os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
-LR = 1e-4
+LR = 1e-5
 EPOCH = config['epoch']
 WD = config['Weight_Decay']
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_v1_No_DropOut_{}'.format(LR), type=str,
+parser.add_argument("--name", default='VoxNet_v1_DropOut_{}'.format(LR), type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 

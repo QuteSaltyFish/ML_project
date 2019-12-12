@@ -45,7 +45,7 @@ if __name__ == "__main__":
     model5 = VoxNet(2).to(DEVICE)
     # Test the train_loader
     model1.load_state_dict(
-        t.load("saved_model/VoxNet_final/75.pkl"))
+        t.load("saved_model/VoxNet_DA_final/11.pkl"))
     model1.eval()
     # model1.load_state_dict(
     #     t.load("/home/wangmingke/Desktop/HomeWork/ML_project/saved_model/VoxNet_V2_final/72.pkl"))

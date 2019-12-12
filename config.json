@@ -15,7 +15,7 @@
     "epoch": 100,
     "lr": 1e-3,
     "Weight_Decay": 0.01,
-    "batch_size": 16,
+    "batch_size": 64,
     "gray": false ,
     "Commment:": "LZX pls use: C:\\Users\\ZXLi\\Anaconda3\\envs\\pytorch\\python",
     "Commment_:": "WMK pls use: /home/wangmingke/anaconda3/envs/pytorch/bin/python",

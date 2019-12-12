@@ -59,12 +59,12 @@ class data_set(t.utils.data.Dataset):
         old_len = len(self.names)
         new_idx = len(self.names)
         new_label = []
-        if not os.path.exists(os.path.join(self.dir, '{}.pth'.format(old_len))):
+        if not os.path.exists(os.path.join(self.dir, '{}.pt'.format(old_len))):
             print('Not exist')
         for idx in range(0, old_len):
             if idx % 10 == 0 and idx != 0:
                 while(True):
-                    if os.path.exists(os.path.join(self.dir, '{}.pth'.format(new_idx-1))):
+                    if os.path.exists(os.path.join(self.dir, '{}.pt'.format(new_idx-1))):
                         break
             # if idx==371:
             #     print("DEBUG")
@@ -76,7 +76,7 @@ class data_set(t.utils.data.Dataset):
         # sum the labels
         self.label = np.concatenate([self.label, np.array(new_label)])
         while(True):
-            if os.path.exists(os.path.join(self.dir, '{}.pth'.format(new_idx-1))):
+            if os.path.exists(os.path.join(self.dir, '{}.pt'.format(new_idx-1))):
                 break
 
         print('data argumentation done, we got {} data'.format(new_idx-1))
@@ -86,7 +86,7 @@ class data_set(t.utils.data.Dataset):
             data = np.load(os.path.join(self.data_root, self.names[idx]))
             voxel = self.transform(data['voxel'])
             seg = self.transform(data['seg'].astype(np.int))
-            t.save([voxel, seg], os.path.join(self.dir, '{}.pth'.format(idx)))
+            t.save([voxel, seg], os.path.join(self.dir, '{}.pt'.format(idx)))
 
     def load_label(self):
         dataframe = pd.read_csv(self.label_path)
@@ -105,7 +105,7 @@ class data_set(t.utils.data.Dataset):
         os.system('rm -rf {}'.format(self.dir))
 
     def __getitem__(self, index):
-        [voxel, seg] = t.load(os.path.join(self.dir, '{}.pth'.format(index)))
+        [voxel, seg] = t.load(os.path.join(self.dir, '{}.pt'.format(index)))
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         voxel = voxel.to(t.float)/255.0

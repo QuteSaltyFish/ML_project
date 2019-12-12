@@ -22,28 +22,28 @@ if __name__ == "__main__":
     data_root = args.dir 
     origin_name = args.origin
     idx = args.idx
-    [voxel, seg] = t.load(os.path.join(data_root, '{}.pth'.format(origin_name)))
+    [voxel, seg] = t.load(os.path.join(data_root, '{}.pt'.format(origin_name)))
     # use permute to change the point of view
     voxeltmp = voxel.permute([0, 2, 1])
     segtmp = seg.permute([0, 2, 1])
-    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pth'.format(idx)))
+    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pt'.format(idx)))
     idx += 1
 
     # mirror the image
     # x axis
     voxeltmp =  voxel.flip(-1)
     segtmp =  seg.flip(-1)
-    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pth'.format(idx)))
+    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pt'.format(idx)))
     idx += 1
     # y axis
     voxeltmp =  voxel.flip(-2)
     segtmp =  seg.flip(-2)
-    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pth'.format(idx)))
+    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pt'.format(idx)))
     idx+=1
     # z axis
     voxeltmp =  voxel.flip(-3)
     segtmp =  seg.flip(-3)
-    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pth'.format(idx)))
+    t.save([voxeltmp, segtmp], os.path.join(data_root, '{}.pt'.format(idx)))
     idx+=1
     print('{}th data argumentation done.'.format(origin_name))
     
