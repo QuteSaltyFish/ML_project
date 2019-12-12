@@ -6,7 +6,7 @@ import torch as t
 import torch.utils.data.dataloader as DataLoader
 import multiprocessing
 
-from model.dataloader_v2 import *
+from model.dataloader_v3 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
@@ -24,7 +24,7 @@ config = json.load(open("config.json"))
 # os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
-LR = 1e-4
+LR = 1e-3
 EPOCH = config['epoch']
 WD = config['Weight_Decay']
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_v1_No_DropOut_{}'.format(LR), type=str,
+parser.add_argument("--name", default='VoxNet_v1_{}_DA'.format(LR), type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -48,7 +48,7 @@ print(args.name, kf.get_n_splits(idx))
 for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
     writer = SummaryWriter('runs/{}_{}_Fold'.format(args.name, K_idx+1))
 
-    train_data, test_data = data_set(train_idx), data_set(test_idx)
+    train_data, test_data = data_set(train_idx, train=True), data_set(test_idx, train=False)
     # train_data.data_argumentation()
     
     train_loader = DataLoader.DataLoader(

@@ -12,11 +12,12 @@ import pandas as pd
 from sklearn.model_selection import KFold
 import os
 
+
 class data_set(t.utils.data.Dataset):
-    def __init__(self, idx, train):
+    def __init__(self, idx, train, name):
         self.idx = idx
         self.train = train
-        
+        self.train_name = name
         self.config = json.load(open('config.json'))
         self.python_path = self.config["python_path"]
         self.data_root = self.config["Taining_Dir"]
@@ -24,18 +25,18 @@ class data_set(t.utils.data.Dataset):
         self.sort()
         self.names = self.names[idx]
         self.label_path = self.config['Label_Path']
-        
 
-        # the direction used to save new tensor, 
-        self.Training_Dir = self.config["Training_Tensor_Dir"]
-        self.Testinng_Dir = self.config["Testing_Tensor_Dir"]
+        # the direction used to save new tensor,
+        self.Training_Dir = os.path.join(
+            self.config["Training_Tensor_Dir"], self.train_name)
+        self.Testinng_Dir = os.path.join(
+            self.config["Testing_Tensor_Dir"], self.train_name)
         if self.train:
             self.dir = self.Training_Dir
         else:
             self.dir = self.Testinng_Dir
-        
-        os.system('rm -rf {}'.format(self.dir))
-        os.makedirs(self.dir)
+        if not os.path.exists(self.dir):
+            os.makedirs(self.dir)
 
         self.init_transform()
         self.load_data()
@@ -61,13 +62,14 @@ class data_set(t.utils.data.Dataset):
         if not os.path.exists(os.path.join(self.dir, '{}.pth'.format(old_len))):
             print('Not exist')
         for idx in range(0, old_len):
-            if idx%100==0 and idx!=0:
+            if idx % 10 == 0 and idx != 0:
                 while(True):
                     if os.path.exists(os.path.join(self.dir, '{}.pth'.format(new_idx-1))):
                         break
             # if idx==371:
             #     print("DEBUG")
-            os.system('nohup {} -u /home/wangmingke/Desktop/HomeWork/ML_project/model/fast_data_argument.py --dir={} --origin={} --idx={} &'.format(self.python_path, self.dir, idx, new_idx))
+            os.system('nohup {} -u /home/wangmingke/Desktop/HomeWork/ML_project/model/fast_data_argument.py --dir={} --origin={} --idx={} &'.format(
+                self.python_path, self.dir, idx, new_idx))
             for i in range(4):
                 new_label.append(self.label[idx])
                 new_idx += 1
@@ -76,15 +78,14 @@ class data_set(t.utils.data.Dataset):
         while(True):
             if os.path.exists(os.path.join(self.dir, '{}.pth'.format(new_idx-1))):
                 break
-        
+
         print('data argumentation done, we got {} data'.format(new_idx-1))
 
     def load_data(self):
-        
         for idx in range(len(self.names)):
             data = np.load(os.path.join(self.data_root, self.names[idx]))
-            voxel = self.transform((data['voxel'].astype(np.float32))/255)
-            seg = self.transform(data['seg'].astype(np.float32))
+            voxel = self.transform(data['voxel'])
+            seg = self.transform(data['seg'].astype(np.int))
             t.save([voxel, seg], os.path.join(self.dir, '{}.pth'.format(idx)))
 
     def load_label(self):
@@ -100,10 +101,15 @@ class data_set(t.utils.data.Dataset):
             transforms.ToTensor()
         ])
 
+    def __del__(self):
+        os.system('rm -rf {}'.format(self.dir))
+
     def __getitem__(self, index):
         [voxel, seg] = t.load(os.path.join(self.dir, '{}.pth'.format(index)))
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
+        voxel = voxel.to(t.float)/255.0
+        seg = seg.to(t.float)
         # data = np.expand_dims(seg, axis=0)
         data = (voxel*seg).unsqueeze(0).unsqueeze(0)
         data = t.nn.functional.interpolate(
@@ -123,6 +129,9 @@ class MyDataSet():
         self.DEVICE = t.device(self.config["DEVICE"])
         self.gray = self.config["gray"]
         self.sort()
+
+    def __del__(self):
+        print('deleted')
 
     def sort(self):
         d = self.data_names
@@ -145,8 +154,8 @@ class MyDataSet():
         self.train_idx = idx[:(int)(length*p)]
         self.test_idx = idx[(int)(length*p):]
 
-        self.train_set = data_set(self.train_idx, train=True)
-        self.test_set = data_set(self.test_idx, train=False)
+        self.train_set = data_set(self.train_idx, train=True, name='1')
+        self.test_set = data_set(self.test_idx, train=False, name='1')
         return self.train_set, self.test_set
 
     def __len__(self):
@@ -157,6 +166,7 @@ class In_the_wild_set(t.utils.data.Dataset):
     def __init__(self):
         super().__init__()
         self.config = json.load(open('config.json'))
+        self.python_path = self.config["python_path"]
         self.test_root = self.config["Test_Dir"]
         self.test_names = os.listdir(self.test_root)
         self.DEVICE = t.device(self.config["DEVICE"])
@@ -200,8 +210,9 @@ class In_the_wild_set(t.utils.data.Dataset):
 if __name__ == "__main__":
 
     DataSet = MyDataSet()
+    DataSet = MyDataSet()
     train_set, test_set = DataSet.test_trian_split()
-    
+
     print(train_set[0])
     print(len(train_set))
     # wild = In_the_wild_set()
@@ -221,4 +232,4 @@ if __name__ == "__main__":
     # for idx, [train_index, test_index] in enumerate(kf.split(a)):
     #     print(idx)
     #     print("TRAIN:", train_index, "TEST:", test_index)
-    # dataset = 
+    # dataset =

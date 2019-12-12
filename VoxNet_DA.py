@@ -6,11 +6,11 @@ import torch as t
 import torch.utils.data.dataloader as DataLoader
 import multiprocessing
 
-from model.dataloader_v2 import *
+from model.dataloader_v3 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
-from model.VoxNet_v1 import VoxNet
+from model.VoxNet_66 import VoxNet
 from model.baseline import FC_Net
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_V1_Finnal', type=str,
+parser.add_argument("--name", default='VoxNet_DA', type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -44,11 +44,11 @@ kf = KFold(n_splits=5)
 idx = np.arange(len(DataSet))
 # writer = SummaryWriter('runs/{}_final'.format(args.name))
 
-train_data = data_set(idx)
+train_data = data_set(idx, train=True, name=args.name)
 # train_data.data_argumentation()
 
 train_loader = DataLoader.DataLoader(
-    train_data, batch_size=config["batch_size"], shuffle=True, drop_last=True)
+    train_data, batch_size=config["batch_size"], shuffle=True, drop_last=False)
 
 model = VoxNet(2).to(DEVICE)
 
@@ -63,9 +63,9 @@ for epoch in range(args.epoch, EPOCH):
     model = model.train()
     train_loss = 0
     correct = 0
-    if epoch>10:
+    if epoch>50:
         optimizer.param_groups[0]['lr'] = 1e-4
-    if epoch>30:
+    if epoch>80:
         optimizer.param_groups[0]['lr'] = 1e-5
     for batch_idx, [data, label] in enumerate(train_loader):
         data, label = data.to(DEVICE), label.to(DEVICE)

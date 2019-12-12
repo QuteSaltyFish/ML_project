@@ -16,8 +16,8 @@ writer.close()
 # %%
 import os
 from tensorboard.backend.event_processing import event_accumulator
-EPOCH=100
-name = 'VoxNet_1e-3'
+EPOCH=50
+name = 'VoxNet_v1_0.0001'
 training_loss = np.zeros(EPOCH, dtype=np.float)
 testing_loss = np.zeros(EPOCH, dtype=np.float)
 training_acc = np.zeros(EPOCH, dtype=np.float)

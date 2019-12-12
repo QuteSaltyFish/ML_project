@@ -10,7 +10,7 @@ from model.dataloader_v2 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
-from model.VoxNet_v1 import VoxNet
+from model.VoxNet_66 import VoxNet
 from model.baseline import FC_Net
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
@@ -24,15 +24,16 @@ config = json.load(open("config.json"))
 # os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
-LR = 1e-4
+LR = 1e-6
 EPOCH = config['epoch']
+BATCH_SIZE = config["batch_size"]
 WD = config['Weight_Decay']
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_v1_No_DropOut_{}'.format(LR), type=str,
+parser.add_argument("--name", default='66_1e-6', type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -43,7 +44,7 @@ np.random.seed(1998)
 kf = KFold(n_splits=5)
 idx = np.arange(len(DataSet))
 np.random.shuffle(idx)
-print(args.name, kf.get_n_splits(idx))
+print(kf.get_n_splits(idx))
 # shuffle the data before the
 for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
     writer = SummaryWriter('runs/{}_{}_Fold'.format(args.name, K_idx+1))
@@ -52,7 +53,7 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
     # train_data.data_argumentation()
     
     train_loader = DataLoader.DataLoader(
-        train_data, batch_size=config["batch_size"], shuffle=True, num_workers=config["num_workers"])
+        train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=config["num_workers"])
     test_loader = DataLoader.DataLoader(
         test_data, batch_size=1, shuffle=False, num_workers=config["num_workers"])
 
@@ -69,8 +70,6 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
         model = model.train()
         train_loss = 0
         correct = 0
-        # if epoch>50:
-        #     optimizer.param_groups[0]['lr'] = 1e-5
         for batch_idx, [data, label] in enumerate(train_loader):
             data, label = data.to(DEVICE), label.to(DEVICE)
             out = model(data).squeeze()
@@ -101,10 +100,6 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
             for batch_idx, [data, label] in enumerate(test_loader):
                 data, label = data.to(DEVICE), label.to(DEVICE)
                 out = model(data)
-                # monitor the upper and lower boundary of output
-                # out_max = t.max(out)
-                # out_min = t.min(out)
-                # out = (out - out_min) / (out_max - out_min)
                 test_loss += criterian(out, label)
                 pred = out.max(1, keepdim=True)[1]  # 找到概率最大的下标
                 correct += pred.eq(label.view_as(pred)).sum().item()

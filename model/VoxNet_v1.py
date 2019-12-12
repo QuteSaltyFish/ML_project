@@ -48,7 +48,7 @@ class VoxNet(torch.nn.Module):
                             out_channels=32, kernel_size=5, stride=2),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
-            torch.nn.Dropout(p=0.2),
+            # torch.nn.Dropout(p=0.2),
             torch.nn.Conv3d(in_channels=32, out_channels=32, kernel_size=3),
             nn.BatchNorm3d(32),
             torch.nn.LeakyReLU(),
