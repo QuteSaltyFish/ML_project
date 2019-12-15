@@ -32,10 +32,12 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
+parser.add_argument("--lr", default=LR, type=int,
+                    help="The epoch to be tested")
 parser.add_argument("--name", default='VoxNet_v1_{}_DA'.format(LR), type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
-
+LR = args.lr
 DataSet = MyDataSet()
 
 # using K-fold

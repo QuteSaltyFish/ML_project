@@ -10,7 +10,7 @@ from model.dataloader_v2 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
-from model.VoxNet_66 import VoxNet
+from model.VoxNet_v4 import VoxNet
 from model.baseline import FC_Net
 from model.func import save_model, eval_model_new_thread, eval_model, load_model
 import argparse
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_66_test', type=str,
+parser.add_argument("--name", default='VoxNet_V4_Finnal', type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -63,10 +63,10 @@ for epoch in range(args.epoch, EPOCH):
     model = model.train()
     train_loss = 0
     correct = 0
-    if epoch>50:
+    if epoch>10:
+        optimizer.param_groups[0]['lr'] = 1e-4
+    if epoch>30:
         optimizer.param_groups[0]['lr'] = 1e-5
-    # if epoch>30:
-    #     optimizer.param_groups[0]['lr'] = 1e-5
     for batch_idx, [data, label] in enumerate(train_loader):
         data, label = data.to(DEVICE), label.to(DEVICE)
         out = model(data).squeeze()

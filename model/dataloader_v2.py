@@ -47,8 +47,8 @@ class data_set(t.utils.data.Dataset):
     def __getitem__(self, index):
         # print(self.names[index].split('.')[0])
         data = np.load(os.path.join(self.data_root, self.names[index]))
-        voxel = (self.transform(data['voxel'].astype(np.float32))/255).unsqueeze(0)
-        seg =  self.transform(data['seg'].astype(np.float32)).unsqueeze(0)
+        voxel = (self.transform(data['voxel'].astype(np.float32))).unsqueeze(0)
+        seg =  self.transform(data['seg'].astype(np.float32)).unsqueeze(0) * 255
 
         label = self.label[index]
         
@@ -127,9 +127,13 @@ class In_the_wild_set(t.utils.data.Dataset):
 
     def __getitem__(self, index):
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg =  self.transform(data['seg'].astype(np.float32))
-        data = (voxel*seg).unsqueeze(0)
+        voxel = (self.transform(data['voxel'].astype(np.float32))).unsqueeze(0)
+        seg =  self.transform(data['seg'].astype(np.float32)).unsqueeze(0) * 255
+
+        # label = self.label[index]
+        
+        data = (voxel*seg)
+        
         name = os.path.basename(self.test_names[index])
         name = os.path.splitext(name)[0]
         return data, name

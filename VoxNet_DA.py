@@ -6,7 +6,7 @@ import torch as t
 import torch.utils.data.dataloader as DataLoader
 import multiprocessing
 
-from model.dataloader_v3 import *
+from model.dataloader_v4 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
@@ -24,7 +24,7 @@ config = json.load(open("config.json"))
 # os.environ["CUDA_VISIBLE_DEVICES"] = config["GPU"]
 DEVICE = t.device(config["DEVICE"])
 LR = config['lr']
-LR = 1e-3
+LR = 1e-4
 EPOCH = config['epoch']
 WD = config['Weight_Decay']
 parser = argparse.ArgumentParser()
@@ -32,7 +32,7 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='VoxNet_DA', type=str,
+parser.add_argument("--name", default='VoxNet_DA2', type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
 
@@ -63,10 +63,10 @@ for epoch in range(args.epoch, EPOCH):
     model = model.train()
     train_loss = 0
     correct = 0
-    if epoch>50:
-        optimizer.param_groups[0]['lr'] = 1e-4
-    if epoch>80:
+    if epoch>40:
         optimizer.param_groups[0]['lr'] = 1e-5
+    if epoch>80:
+        optimizer.param_groups[0]['lr'] = 1e-6
     for batch_idx, [data, label] in enumerate(train_loader):
         data, label = data.to(DEVICE), label.to(DEVICE)
         out = model(data).squeeze()

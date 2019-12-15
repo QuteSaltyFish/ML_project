@@ -55,38 +55,48 @@ class data_set(t.utils.data.Dataset):
         # print(self.data_names)
 
     def data_argumentation(self):
-        os.system('rm nohup.out')
         old_len = len(self.names)
         new_idx = len(self.names)
         new_label = []
-        if not os.path.exists(os.path.join(self.dir, '{}.pt'.format(old_len))):
-            print('Not exist')
         for idx in range(0, old_len):
-            if idx % 10 == 0 and idx != 0:
-                while(True):
-                    if os.path.exists(os.path.join(self.dir, '{}.pt'.format(new_idx-1))):
-                        break
-            # if idx==371:
-            #     print("DEBUG")
-            os.system('nohup {} -u /home/wangmingke/Desktop/HomeWork/ML_project/model/fast_data_argument.py --dir={} --origin={} --idx={} &'.format(
-                self.python_path, self.dir, idx, new_idx))
-            for i in range(4):
-                new_label.append(self.label[idx])
-                new_idx += 1
+            voxel = self.voxel[idx]
+            seg = self.seg[idx]
+
+            self.voxel.append(voxel.permute([0, 2, 1]))
+            self.seg.append(seg.permute([0, 2, 1]))
+            new_label.append(self.label[idx])
+            new_idx += 1
+
+            # mirror the image
+            # x axis
+            self.voxel.append(voxel.flip(-1))
+            self.seg.append(seg.flip(-1))
+            new_label.append(self.label[idx])
+            new_idx += 1
+            # y axis
+            self.voxel.append(voxel.flip(-2))
+            self.seg.append(seg.flip(-2))
+            new_label.append(self.label[idx])
+            new_idx+=1
+            # z axis
+            self.voxel.append(voxel.flip(-3))
+            self.seg.append(seg.flip(-3))
+            new_label.append(self.label[idx])
+            new_idx+=1
+
         # sum the labels
         self.label = np.concatenate([self.label, np.array(new_label)])
-        while(True):
-            if os.path.exists(os.path.join(self.dir, '{}.pt'.format(new_idx-1))):
-                break
-
         print('data argumentation done, we got {} data'.format(new_idx-1))
 
     def load_data(self):
+        self.seg = [] 
+        self.voxel = []
         for idx in range(len(self.names)):
             data = np.load(os.path.join(self.data_root, self.names[idx]))
-            voxel = self.transform(data['voxel'])
-            seg = self.transform(data['seg'].astype(np.int))
-            t.save([voxel, seg], os.path.join(self.dir, '{}.pt'.format(idx)))
+            self.voxel.append(self.transform(data['voxel'].astype(np.float32)))
+            self.seg.append(self.transform(data['seg'].astype(np.float32)))*255
+
+            
 
     def load_label(self):
         dataframe = pd.read_csv(self.label_path)
@@ -101,11 +111,8 @@ class data_set(t.utils.data.Dataset):
             transforms.ToTensor()
         ])
 
-    def __del__(self):
-        os.system('rm -rf {}'.format(self.dir))
-
     def __getitem__(self, index):
-        [voxel, seg] = t.load(os.path.join(self.dir, '{}.pt'.format(index)))
+        voxel, seg = self.voxel[index], self.seg[index]
         # label = self.label.astype(np.float32)[index]
         label = self.label[index]
         voxel = voxel.to(t.float)/255.0
@@ -130,8 +137,6 @@ class MyDataSet():
         self.gray = self.config["gray"]
         self.sort()
 
-    def __del__(self):
-        print('deleted')
 
     def sort(self):
         d = self.data_names
@@ -194,11 +199,11 @@ class In_the_wild_set(t.utils.data.Dataset):
 
     def __getitem__(self, index):
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))/255
-        seg = self.transform(data['seg'].astype(np.float32))
+        voxel = self.transform(data['voxel'].astype(np.float32))
+        seg = self.transform(data['seg'].astype(np.float32))*255
         data = (voxel*seg).unsqueeze(0).unsqueeze(0)
-        data = t.nn.functional.interpolate(
-            data, [32, 32, 32], mode='trilinear').squeeze(0)
+        # data = t.nn.functional.interpolate(
+        #     data, [32, 32, 32], mode='trilinear').squeeze(0)
         name = os.path.basename(self.test_names[index])
         name = os.path.splitext(name)[0]
         return data, name

@@ -6,7 +6,7 @@ import torch as t
 import torch.utils.data.dataloader as DataLoader
 import multiprocessing
 
-from model.dataloader_v3 import *
+from model.dataloader_v4 import *
 from model.DnCNN import DnCNN
 from model import Resnet
 from model import Conv3D_Net
@@ -32,10 +32,12 @@ parser.add_argument(
     "--gpu", default=config["GPU"], type=str, help="choose which DEVICE U want to use")
 parser.add_argument("--epoch", default=0, type=int,
                     help="The epoch to be tested")
-parser.add_argument("--name", default='66_{}_DA'.format(LR), type=str,
+parser.add_argument("--lr", default=LR, type=float,
+                    help="The epoch to be tested")
+parser.add_argument("--name", default='VoxNet_v1_{}_DA'.format(LR), type=str,
                     help="Whether to test after training")
 args = parser.parse_args()
-
+LR = args.lr
 DataSet = MyDataSet()
 
 # using K-fold
@@ -130,6 +132,10 @@ for K_idx, [train_idx, test_idx] in enumerate(kf.split(idx)):
         writer.add_scalar('Training/Training_Acc', train_acc, epoch)
         writer.add_scalar('Testing/Testing_Loss', test_loss, epoch)
         writer.add_scalar('Testing/Testing_Acc', test_acc, epoch)
+    del(train_data)
+    del(test_data)
+    del(train_loader)
+    del(test_loader)
     writer.close()
 
 #%%  
