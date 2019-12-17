@@ -69,6 +69,7 @@ for epoch in range(args.epoch, EPOCH):
         optimizer.param_groups[0]['lr'] = 1e-6
     for batch_idx, [data, label] in enumerate(train_loader):
         data, label = data.to(DEVICE), label.to(DEVICE)
+        # print(t.max(data))
         out = model(data).squeeze()
         loss = criterian(out, label.squeeze())
         optimizer.zero_grad()

@@ -45,7 +45,7 @@ if __name__ == "__main__":
     model5 = VoxNet(2).to(DEVICE)
     # Test the train_loader
     model1.load_state_dict(
-        t.load("saved_model/VoxNet_DA_final/75.pkl"))
+        t.load("saved_model/VoxNet_DA_final/38.pkl"))
     model1.eval()
     # model1.load_state_dict(
     #     t.load("/home/wangmingke/Desktop/HomeWork/ML_project/saved_model/VoxNet_V2_final/72.pkl"))
@@ -73,7 +73,8 @@ if __name__ == "__main__":
         Name = []
         Score = []
         for batch_idx, [data, name] in enumerate(test_loader):
-            data = data.to(DEVICE)
+            data = data.to(DEVICE)/255
+            # print(t.max(data))
             out1 = t.nn.functional.softmax(model1(data))
             # out2 = t.nn.functional.softmax(model2(data))
             # out3 = t.nn.functional.softmax(model3(data))

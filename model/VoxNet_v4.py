@@ -33,7 +33,7 @@ class VoxNet(torch.nn.Module):
         super(VoxNet, self).__init__()
         self.body = torch.nn.Sequential(
             torch.nn.Conv3d(in_channels=1,
-                            out_channels=128, kernel_size=3, stride=1),
+                            out_channels=128, kernel_size=5, stride=1),
             nn.BatchNorm3d(128),
             torch.nn.LeakyReLU(),
             # torch.nn.Dropout(p=0.2),
@@ -57,7 +57,7 @@ class VoxNet(torch.nn.Module):
         self.head = torch.nn.Sequential(
             torch.nn.Linear(first_fc_in_features, 128),
             torch.nn.ReLU(),
-            torch.nn.Dropout(p=0.5),
+            # torch.nn.Dropout(p=0.5),
             torch.nn.Linear(128, num_classes)
         )
 

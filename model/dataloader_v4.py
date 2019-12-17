@@ -94,7 +94,7 @@ class data_set(t.utils.data.Dataset):
         for idx in range(len(self.names)):
             data = np.load(os.path.join(self.data_root, self.names[idx]))
             self.voxel.append(self.transform(data['voxel'].astype(np.float32)))
-            self.seg.append(self.transform(data['seg'].astype(np.float32)))*255
+            self.seg.append(self.transform(data['seg'].astype(np.float32)))
 
             
 
@@ -199,8 +199,8 @@ class In_the_wild_set(t.utils.data.Dataset):
 
     def __getitem__(self, index):
         data = np.load(os.path.join(self.test_root, self.test_names[index]))
-        voxel = self.transform(data['voxel'].astype(np.float32))
-        seg = self.transform(data['seg'].astype(np.float32))*255
+        voxel = self.transform(data['voxel'].astype(np.float32))/255
+        seg = self.transform(data['seg'].astype(np.float32))
         data = (voxel*seg).unsqueeze(0).unsqueeze(0)
         # data = t.nn.functional.interpolate(
         #     data, [32, 32, 32], mode='trilinear').squeeze(0)
@@ -218,8 +218,8 @@ if __name__ == "__main__":
     DataSet = MyDataSet()
     train_set, test_set = DataSet.test_trian_split()
 
-    print(train_set[0])
-    print(len(train_set))
+    print(train_set[0]
+    
     # wild = In_the_wild_set()
     # print(len(train_set))
     # print(len(test_set))
